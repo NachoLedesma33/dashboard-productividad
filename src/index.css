@@ -11,11 +11,7 @@
   --color-accent-hover: #7c3aed;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+
 
 html {
   font-family:
@@ -222,34 +218,3 @@ p {
   }
 }
 
-/* Forzar separaciones */
-.task-board-container {
-  padding: 2rem !important;
-  margin-bottom: 2.5rem !important;
-}
-
-.task-card {
-  padding: 1.75rem !important;
-  margin-bottom: 1.5rem !important;
-  gap: 1.5rem !important;
-}
-
-.habit-card {
-  padding: 2.5rem !important;
-  margin-bottom: 2.5rem !important;
-  gap: 2.5rem !important;
-}
-
-.insight-card {
-  padding: 2.5rem !important;
-  margin-bottom: 2.5rem !important;
-  gap: 2.5rem !important;
-}
-
-.column-gap {
-  gap: 2rem !important;
-}
-
-.space-y-large {
-  gap: 2.5rem !important;
-}

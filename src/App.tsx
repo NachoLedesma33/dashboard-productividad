@@ -110,10 +110,7 @@ function App() {
           >
             {/* Task Board */}
             <div className="xl:col-span-2">
-              <div className="glass rounded-3xl shadow-2xl border-0 p-8 lg:p-10 transform hover:scale-[1.02] transition-all duration-300">
-                <h2 className="text-2xl font-bold mb-8 bg-gradient-to-r from-violet-600 to-pink-600 bg-clip-text text-transparent">
-                  Tareas
-                </h2>
+              <div className="glass rounded-2xl shadow-xl border-0 p-5 transition-all duration-300">
                 <TaskBoard
                   tasks={tasks}
                   onToggle={toggleTask}
@@ -126,7 +123,7 @@ function App() {
 
             {/* Habits Panel */}
             <div className="xl:col-span-1">
-              <div className="glass rounded-3xl shadow-2xl border-0 p-8 lg:p-10 transform hover:scale-[1.02] transition-all duration-300">
+              <div className="glass rounded-2xl shadow-xl border-0 p-5 transition-all duration-300">
                 <HabitTracker
                   habits={habits}
                   getTodayStatus={getTodayStatus}
@@ -144,12 +141,12 @@ function App() {
             style={{ animationDelay: "0.2s" }}
           >
             {/* Insights */}
-            <div className="glass rounded-3xl shadow-2xl border-0 p-8 lg:p-10 transform hover:scale-[1.02] transition-all duration-300">
+            <div className="glass rounded-2xl shadow-xl border-0 p-5 transition-all duration-300">
               <InsightsPanel insights={insights} />
             </div>
 
             {/* Productivity Chart */}
-            <div className="glass rounded-3xl shadow-2xl border-0 p-8 lg:p-10 transform hover:scale-[1.02] transition-all duration-300">
+            <div className="glass rounded-2xl shadow-xl border-0 p-5 transition-all duration-300">
               <ProductivityChart tasks={tasks} />
             </div>
           </div>
