@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import type { Insight } from '@/utils/analytics/insightsEngine';
 
 interface InsightsPanelProps {
@@ -6,12 +5,6 @@ interface InsightsPanelProps {
 }
 
 export function InsightsPanel({ insights }: InsightsPanelProps) {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    setVisible(true);
-  }, []);
-
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
@@ -40,11 +33,7 @@ export function InsightsPanel({ insights }: InsightsPanelProps) {
         </button>
       </div>
 
-      <div
-        className={`space-y-3 transition-opacity duration-500 ${
-          visible ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
+      <div className="space-y-3">
         {insights.length === 0 ? (
           <div className="text-center py-6 text-gray-500">
             <p>Completa más tareas para recibir</p>
@@ -54,7 +43,7 @@ export function InsightsPanel({ insights }: InsightsPanelProps) {
           insights.map((insight) => (
             <div
               key={insight.id}
-              className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100 rounded-lg"
+              className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100 rounded-lg animate-fade-in"
             >
               <span className="text-2xl">{insight.emoji}</span>
               <p className="text-gray-800 font-medium">{insight.message}</p>
