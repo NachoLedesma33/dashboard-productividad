@@ -13,20 +13,18 @@ let dbInitialized = false;
 let initPromise: Promise<void> | null = null;
 
 export function useDatabase(): UseDatabaseReturn {
-  const [isLoading, setIsLoading] = useState(!dbInitialized);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const resetDatabase = async () => {
     await db.delete();
     db.open();
     dbInitialized = false;
+    setIsLoading(true);
   };
 
   useEffect(() => {
-    if (dbInitialized) {
-      setIsLoading(false);
-      return;
-    }
+    if (dbInitialized) return;
 
     if (!initPromise) {
       initPromise = db.open().then(() => {
