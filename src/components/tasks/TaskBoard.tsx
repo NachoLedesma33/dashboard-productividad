@@ -88,34 +88,40 @@ function Column({
     }
   };
 
+  const columnColors: Record<Priority, string> = {
+    high: 'border-red-200 dark:border-red-800',
+    medium: 'border-amber-200 dark:border-amber-800',
+    low: 'border-slate-200 dark:border-slate-700',
+  };
+
   return (
-    <div className="flex-1 min-w-[280px] bg-gray-100 rounded-lg p-3">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-gray-700">
-          {title} <span className="text-gray-500">({tasks.length})</span>
+    <div className={`flex-1 min-w-[280px] glass task-board-container rounded-2xl border-2 ${columnColors[priority]} transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl`}>
+      <div className="flex items-center justify-between mb-10">
+        <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">
+          {title} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">({tasks.length})</span>
         </h3>
         <button
           onClick={() => setShowInput(!showInput)}
-          className="w-7 h-7 flex items-center justify-center bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors"
+          className="w-10 h-10 flex items-center justify-center bg-gradient-to-r from-violet-500 to-pink-500 text-white rounded-full hover:from-violet-600 hover:to-pink-600 transition-all duration-300 text-lg font-bold shadow-lg hover:shadow-xl transform hover:scale-110"
         >
           +
         </button>
       </div>
 
       {showInput && (
-        <div className="mb-3 flex gap-2">
+        <div className="mb-10 flex gap-6 animate-slide-in">
           <input
             type="text"
             value={newTaskTitle}
             onChange={(e) => setNewTaskTitle(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
             placeholder="Nueva tarea..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="flex-1 px-5 py-4 text-sm border-2 border-violet-200 dark:border-violet-700 rounded-xl bg-white/80 dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent backdrop-blur-sm transition-all duration-300"
             autoFocus
           />
           <button
             onClick={handleAdd}
-            className="px-3 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700"
+            className="px-8 py-4 bg-gradient-to-r from-violet-500 to-pink-500 text-white rounded-xl text-sm hover:from-violet-600 hover:to-pink-600 font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
           >
             Add
           </button>
@@ -123,7 +129,7 @@ function Column({
       )}
 
       <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-        <div className="flex flex-col gap-2">
+        <div className="space-y-6 space-y-large">
           {tasks.map((task) => (
             <SortableTaskCard
               key={task.id}
@@ -133,6 +139,12 @@ function Column({
               onPriorityChange={onPriorityChange}
             />
           ))}
+          {tasks.length === 0 && (
+            <div className="text-center py-20 text-slate-400 dark:text-slate-500">
+              <div className="text-4xl mb-4">📝</div>
+              <p className="text-sm">Sin tareas</p>
+            </div>
+          )}
         </div>
       </SortableContext>
     </div>
@@ -182,9 +194,9 @@ export function TaskBoard({
       onDragEnd={handleDragEnd}
       onDragStart={handleDragStart}
     >
-      <div className="flex gap-4">
+      <div className="flex flex-col md:flex-row gap-8 column-gap">
         <Column
-          title="Alta Prioridad"
+          title="Alta"
           priority="high"
           tasks={highTasks}
           onToggle={onToggle}
@@ -193,7 +205,7 @@ export function TaskBoard({
           onAddTask={onAddTask}
         />
         <Column
-          title="Media Prioridad"
+          title="Media"
           priority="medium"
           tasks={mediumTasks}
           onToggle={onToggle}
@@ -202,7 +214,7 @@ export function TaskBoard({
           onAddTask={onAddTask}
         />
         <Column
-          title="Baja Prioridad"
+          title="Baja"
           priority="low"
           tasks={lowTasks}
           onToggle={onToggle}

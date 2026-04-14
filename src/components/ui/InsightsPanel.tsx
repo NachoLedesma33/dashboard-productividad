@@ -6,16 +6,16 @@ interface InsightsPanelProps {
 
 export function InsightsPanel({ insights }: InsightsPanelProps) {
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-800">Insights</h2>
+    <div>
+      <div className="flex items-center justify-between mb-12">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-pink-600 bg-clip-text text-transparent">Insights</h2>
         <button
-          className="text-gray-400 hover:text-purple-600 transition-colors"
+          className="w-12 h-12 flex items-center justify-center text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/30 rounded-xl transition-all duration-300 transform hover:scale-110"
           title="Regenerar insights"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
+            className="h-6 w-6"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -33,20 +33,21 @@ export function InsightsPanel({ insights }: InsightsPanelProps) {
         </button>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-10 space-y-large">
         {insights.length === 0 ? (
-          <div className="text-center py-6 text-gray-500">
-            <p>Completa más tareas para recibir</p>
+          <div className="text-center py-24 text-slate-500">
+            <div className="text-6xl mb-8">💡</div>
+            <p className="mb-4 text-lg font-medium">Completa más tareas para recibir</p>
             <p className="text-sm">recomendaciones personalizadas</p>
           </div>
         ) : (
           insights.map((insight) => (
             <div
               key={insight.id}
-              className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100 rounded-lg animate-fade-in"
+              className="flex items-center gap-10 p-10 glass insight-card rounded-2xl border-0 hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 animate-slide-in"
             >
-              <span className="text-2xl">{insight.emoji}</span>
-              <p className="text-gray-800 font-medium">{insight.message}</p>
+              <div className="text-4xl animate-pulse-slow">{insight.emoji}</div>
+              <p className="font-semibold text-slate-700 dark:text-slate-200 text-lg leading-relaxed">{insight.message}</p>
             </div>
           ))
         )}
