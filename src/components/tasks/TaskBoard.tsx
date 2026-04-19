@@ -102,7 +102,7 @@ function SortableTaskCard({
             // clicking an internal control — don't set offset nor start drag
             setDragOffset(null);
             // still allow the filtered listener to decide (it will ignore if data-no-dnd)
-            filteredListeners.onPointerDown?.(e as unknown as Event);
+            filteredListeners?.onPointerDown?.(e as unknown as Event);
             return;
           }
           const el = e.currentTarget as HTMLElement | null;
@@ -117,7 +117,7 @@ function SortableTaskCard({
           setDragOffset(null);
         }
         // Call the original onPointerDown so dnd-kit can start the drag.
-        filteredListeners.onPointerDown?.(e as unknown as Event);
+        filteredListeners?.onPointerDown?.(e as unknown as Event);
       }}
     >
       <TaskCard task={task} onToggle={onToggle} onDelete={onDelete} />
