@@ -27,6 +27,14 @@ export async function updateTask(
   return db.tasks.update(id, changes);
 }
 
+export async function bulkUpdateTasks(tasks: Task[]): Promise<void> {
+  await db.transaction('rw', db.tasks, async () => {
+    for (const task of tasks) {
+      await db.tasks.put(task);
+    }
+  });
+}
+
 export async function deleteTask(id: string): Promise<void> {
   await db.tasks.delete(id);
 }

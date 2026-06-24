@@ -1,6 +1,6 @@
 import { create, type StateCreator } from 'zustand';
 import type { Task } from '@/types';
-import { getAllTasks, addTask as dbAddTask, updateTask as dbUpdateTask, deleteTask as dbDeleteTask } from '@/db/database';
+import { getAllTasks, addTask as dbAddTask, updateTask as dbUpdateTask, deleteTask as dbDeleteTask, bulkUpdateTasks } from '@/db/database';
 
 interface TaskState {
   tasks: Task[];
@@ -81,10 +81,7 @@ export const useTaskStore = create<TaskState>()(devLogger((set, get) => ({
 
   reorderTasks: async (tasks) => {
     set({ tasks });
-    
-    for (const task of tasks) {
-      await dbUpdateTask(task.id, { ...task });
-    }
+    await bulkUpdateTasks(tasks);
   },
 
   deleteTask: async (id) => {

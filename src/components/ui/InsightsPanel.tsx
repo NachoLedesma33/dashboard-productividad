@@ -1,4 +1,5 @@
 import type { Insight } from '@/utils/analytics/insightsEngine';
+import { Lightbulb } from 'lucide-react';
 
 interface InsightsPanelProps {
   insights: Insight[];
@@ -17,13 +18,13 @@ export function InsightsPanel({ insights }: InsightsPanelProps) {
             {insights.length}
           </span>
         </div>
-        <span className="text-base" title="Insights de productividad">💡</span>
+        <Lightbulb className="w-5 h-5 text-amber-400" aria-label="Insights de productividad" />
       </div>
 
       {/* List */}
       {insights.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center py-10 text-slate-400 dark:text-slate-600">
-          <span className="text-2xl mb-2">💡</span>
+          <Lightbulb className="w-6 h-6 mb-2 text-amber-400/60" />
           <p className="text-xs font-medium text-center leading-relaxed">
             Completa más tareas para recibir recomendaciones
           </p>

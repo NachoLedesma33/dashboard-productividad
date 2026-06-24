@@ -23,6 +23,7 @@ import type { Task, Priority } from "@/types";
 import { TaskCard } from "@/components/ui/TaskCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Circle, Eye, EyeOff } from "lucide-react";
 
 interface TaskBoardProps {
   tasks: Task[];
@@ -99,6 +100,12 @@ function SortableTaskCard({
   );
 }
 
+const emptyIconColor: Record<string, string> = {
+  red: "text-red-400 dark:text-red-500",
+  amber: "text-amber-400 dark:text-amber-500",
+  slate: "text-slate-300 dark:text-slate-600",
+};
+
 const columnConfig: Record<
   Priority,
   { title: string; accent: string; headerBg: string; emptyIcon: string }
@@ -107,19 +114,19 @@ const columnConfig: Record<
     title: "Alta prioridad",
     accent: "border-t-red-400",
     headerBg: "from-red-50 to-transparent dark:from-red-950/30",
-    emptyIcon: "🔴",
+    emptyIcon: "red",
   },
   medium: {
     title: "Media prioridad",
     accent: "border-t-amber-400",
     headerBg: "from-amber-50 to-transparent dark:from-amber-950/30",
-    emptyIcon: "🟡",
+    emptyIcon: "amber",
   },
   low: {
     title: "Baja prioridad",
     accent: "border-t-slate-400",
     headerBg: "from-slate-50 to-transparent dark:from-slate-800/30",
-    emptyIcon: "⚪",
+    emptyIcon: "slate",
   },
 };
 
@@ -208,7 +215,7 @@ function Column({
             ))}
             {tasks.length === 0 && (
               <div className="flex flex-col items-center justify-center py-10 text-slate-400 dark:text-slate-600">
-                <span className="text-2xl mb-2">{cfg.emptyIcon}</span>
+                <Circle className={`w-6 h-6 mb-2 ${emptyIconColor[cfg.emptyIcon]}`} fill="currentColor" />
                 <p className="text-xs font-medium">Sin tareas</p>
               </div>
             )}
@@ -228,13 +235,15 @@ export function TaskBoard({
   onReorder,
 }: TaskBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [hideCompleted, setHideCompleted] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
   const offsetRef = useRef({ x: 0, y: 0 });
   const initialPointerRef = useRef({ x: 0, y: 0 });
 
-  const highTasks = tasks.filter((t) => t.priority === "high");
-  const mediumTasks = tasks.filter((t) => t.priority === "medium");
-  const lowTasks = tasks.filter((t) => t.priority === "low");
+  const visible = hideCompleted ? tasks.filter((t) => !t.completed) : tasks;
+  const highTasks = visible.filter((t) => t.priority === "high");
+  const mediumTasks = visible.filter((t) => t.priority === "medium");
+  const lowTasks = visible.filter((t) => t.priority === "low");
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -297,7 +306,7 @@ export function TaskBoard({
 
     if (targetPriority !== activeTask.priority) {
       onPriorityChange(taskId, targetPriority);
-    } else if (active.id !== over.id) {
+    } else if (active.id !== over.id && !hideCompleted) {
       const columnTasks = tasks.filter((t) => t.priority === targetPriority);
       const oldIndex = columnTasks.findIndex((t) => t.id === taskId);
       const newIndex = columnTasks.findIndex((t) => t.id === overId);
@@ -318,6 +327,17 @@ export function TaskBoard({
 
   return (
     <>
+      <div className="flex items-center justify-end mb-2">
+        <button
+          onClick={() => setHideCompleted(!hideCompleted)}
+          className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+          aria-label={hideCompleted ? "Mostrar completadas" : "Ocultar completadas"}
+        >
+          {hideCompleted ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+          {hideCompleted ? "Mostrar completadas" : "Ocultar completadas"}
+        </button>
+      </div>
+
       <DndContext
         sensors={sensors}
         collisionDetection={pointerWithin}

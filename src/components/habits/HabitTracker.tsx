@@ -3,6 +3,7 @@ import { format, isToday, startOfWeek, addDays, isSameDay } from 'date-fns';
 import type { Habit } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Target, Flame, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -120,7 +121,7 @@ export function HabitTracker({
       {/* List */}
       {habits.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center py-10 text-slate-400 dark:text-slate-600">
-          <span className="text-2xl mb-2">🎯</span>
+          <Target className="w-6 h-6 mb-2 text-slate-400 dark:text-slate-600" />
           <p className="text-xs font-medium">Sin hábitos</p>
           <p className="text-xs mt-1">Agrega tu primer hábito</p>
         </div>
@@ -162,7 +163,7 @@ export function HabitTracker({
                   </p>
                   {streak > 0 && (
                     <p className="text-[11px] text-orange-500 font-medium leading-none mt-0.5">
-                      🔥 {streak} días seguidos
+                      <Flame className="w-3.5 h-3.5 inline-block -mt-0.5" /> {streak} días seguidos
                     </p>
                   )}
                 </div>
@@ -178,7 +179,7 @@ export function HabitTracker({
                   className="w-6 h-6 shrink-0 flex items-center justify-center text-slate-300 dark:text-slate-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100 text-xs"
                   aria-label="Eliminar hábito"
                 >
-                  ✕
+                  <X className="w-3 h-3" />
                 </button>
               </div>
             );
