@@ -1,12 +1,10 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans:
-    "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
-  --font-display:
-    "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
+  --font-display: "Space Grotesk", "Inter", system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   /* ── Design tokens ── */
   --color-bg-base: #0a0e17;
@@ -57,14 +55,7 @@
 }
 
 html {
-  font-family:
-    "Inter",
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
@@ -83,23 +74,35 @@ body {
   width: 100%;
 }
 
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
 h1 {
   font-size: 2rem;
   font-weight: 700;
-  letter-spacing: -0.025em;
-  color: var(--color-text-primary);
 }
 
-h2,
-h3 {
+h2 {
+  font-size: 1.125rem;
   font-weight: 600;
-  color: var(--color-text-primary);
+}
+
+h3 {
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 p {
   color: var(--color-text-secondary);
 }
 
+/* ── Animations ── */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -130,6 +133,7 @@ p {
   }
 }
 
+/* ── Scrollbar ── */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -153,12 +157,14 @@ p {
   background-clip: padding-box;
 }
 
+/* ── Surface utilities ── */
 .surface-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-2xl);
 }
 
+/* ── Re-animations from earlier sessions ── */
 .animate-slide-in {
   animation: slideInUp 0.6s ease-out forwards;
 }
