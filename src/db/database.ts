@@ -61,6 +61,10 @@ export async function toggleHabitToday(id: string): Promise<void> {
   }
 }
 
+export async function deleteHabit(id: string): Promise<void> {
+  await db.habits.delete(id);
+}
+
 export async function getAllHabits(): Promise<Habit[]> {
   return db.habits.toArray();
 }

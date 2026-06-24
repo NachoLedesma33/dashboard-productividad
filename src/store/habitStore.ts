@@ -1,6 +1,6 @@
 import { create, type StateCreator } from 'zustand';
 import type { Habit } from '@/types';
-import { addHabit as dbAddHabit, toggleHabitToday as dbToggleHabit, getAllHabits as dbGetAllHabits } from '@/db/database';
+import { addHabit as dbAddHabit, toggleHabitToday as dbToggleHabit, deleteHabit as dbDeleteHabit, getAllHabits as dbGetAllHabits } from '@/db/database';
 
 function getTodayStart(): Date {
   const today = new Date();
@@ -78,6 +78,7 @@ interface HabitState {
   fetchHabits: () => Promise<void>;
   addHabit: (name: string) => Promise<void>;
   toggleHabit: (habitId: string) => Promise<void>;
+  deleteHabit: (habitId: string) => Promise<void>;
   getTodayStatus: (habitId: string) => boolean;
   getStreak: (habitId: string) => number;
   getBestStreak: (habitId: string) => number;
@@ -149,6 +150,11 @@ export const useHabitStore = create<HabitState>()(devLogger((set, get) => ({
         }
       }),
     }));
+  },
+
+  deleteHabit: async (habitId) => {
+    await dbDeleteHabit(habitId);
+    set((state) => ({ habits: state.habits.filter((h) => h.id !== habitId) }));
   },
 
   getTodayStatus: (habitId) => {

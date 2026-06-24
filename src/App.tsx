@@ -40,6 +40,7 @@ function App() {
     fetchHabits,
     addHabit,
     toggleHabit,
+    deleteHabit,
     getTodayStatus,
     getStreak,
   } = useHabitStore();
@@ -134,6 +135,7 @@ function App() {
                   getTodayStatus={getTodayStatus}
                   getStreak={getStreak}
                   onToggle={toggleHabit}
+                  onDeleteHabit={deleteHabit}
                   onAddHabit={addHabit}
                 />
               </div>

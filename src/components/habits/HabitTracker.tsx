@@ -17,6 +17,7 @@ interface HabitTrackerProps {
   getTodayStatus: (id: string) => boolean;
   getStreak: (id: string) => number;
   onToggle: (id: string) => void;
+  onDeleteHabit: (id: string) => void;
   onAddHabit: (name: string) => void;
 }
 
@@ -87,6 +88,7 @@ export function HabitTracker({
   getTodayStatus,
   getStreak,
   onToggle,
+  onDeleteHabit,
   onAddHabit,
 }: HabitTrackerProps) {
 
@@ -169,6 +171,15 @@ export function HabitTracker({
                 <div className="shrink-0 overflow-x-auto">
                   <WeeklyCalendar completionDates={habit.completionDates} />
                 </div>
+
+                {/* Delete button */}
+                <button
+                  onClick={() => onDeleteHabit(habit.id)}
+                  className="w-6 h-6 shrink-0 flex items-center justify-center text-slate-300 dark:text-slate-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100 text-xs"
+                  aria-label="Eliminar hábito"
+                >
+                  ✕
+                </button>
               </div>
             );
           })}
