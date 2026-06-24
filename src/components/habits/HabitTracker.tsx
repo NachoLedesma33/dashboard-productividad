@@ -39,10 +39,10 @@ function WeeklyCalendar({ completionDates }: { completionDates: Date[] }) {
             title={format(day, 'EEEE d MMM')}
             className={`w-5 h-5 sm:w-7 sm:h-7 shrink-0 rounded-md sm:rounded-lg flex items-center justify-center text-[8px] sm:text-[10px] font-semibold transition-all duration-200 ${
               isCompleted
-                ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-sm'
+                ? 'bg-accent text-white'
                 : isTodayDate
-                ? 'border border-violet-400 bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-300'
-                : 'bg-slate-100 dark:bg-slate-700/60 text-slate-400 dark:text-slate-500'
+                ? 'border border-accent/50 bg-accent-soft text-accent'
+                : 'bg-surface-elevated text-text-muted'
             }`}
           >
             {format(day, 'd')}
@@ -78,7 +78,7 @@ function AddHabitForm({ onAdd }: { onAdd: (name: string) => void }) {
         <DialogClose asChild ref={closeRef}>
           <Button variant="outline">Cancelar</Button>
         </DialogClose>
-        <Button type="submit" variant="gradient">Agregar</Button>
+        <Button type="submit" variant="ghost">Agregar</Button>
       </div>
     </form>
   );
@@ -98,16 +98,16 @@ export function HabitTracker({
       {/* Header — same style as TaskBoard column */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-bold text-slate-700 dark:text-slate-200 tracking-tight">
+          <h2 className="text-sm font-bold text-text-primary tracking-tight">
             Hábitos
           </h2>
-          <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-full px-2 py-0.5">
+          <span className="text-xs font-semibold text-text-muted bg-surface-elevated rounded-full px-2 py-0.5">
             {habits.length}
           </span>
         </div>
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="gradient" size="iconSm">+</Button>
+            <Button variant="ghost" size="iconSm">+</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
@@ -120,8 +120,8 @@ export function HabitTracker({
 
       {/* List */}
       {habits.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center py-10 text-slate-400 dark:text-slate-600">
-          <Target className="w-6 h-6 mb-2 text-slate-400 dark:text-slate-600" />
+        <div className="flex-1 flex flex-col items-center justify-center py-10 text-text-muted">
+          <Target className="w-6 h-6 mb-2 text-text-muted" />
           <p className="text-xs font-medium">Sin hábitos</p>
           <p className="text-xs mt-1">Agrega tu primer hábito</p>
         </div>
@@ -133,15 +133,15 @@ export function HabitTracker({
             return (
               <div
                 key={habit.id}
-                className="group flex items-center gap-3 px-4 py-3 rounded-xl bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm hover:bg-white/80 dark:hover:bg-slate-800/80 hover:shadow-md transition-all duration-200"
+                className="group flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-elevated/40 hover:bg-surface-elevated/80 hover:shadow-md transition-all duration-200"
               >
                 {/* Toggle button */}
                 <button
                   onClick={() => onToggle(habit.id)}
                   className={`w-5 h-5 shrink-0 rounded-md border-2 flex items-center justify-center transition-all duration-200 ${
                     done
-                      ? 'bg-emerald-500 border-emerald-500'
-                      : 'border-slate-300 dark:border-slate-600 hover:border-emerald-400'
+                      ? 'bg-accent border-accent'
+                      : 'border-text-muted hover:border-accent'
                   }`}
                   aria-label="Completar hábito"
                 >
@@ -156,13 +156,13 @@ export function HabitTracker({
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-medium truncate transition-all duration-200 ${
                     done
-                      ? 'line-through text-slate-400 dark:text-slate-500'
-                      : 'text-slate-700 dark:text-slate-200'
+                      ? 'line-through text-text-muted'
+                      : 'text-text-primary'
                   }`}>
                     {habit.name}
                   </p>
                   {streak > 0 && (
-                    <p className="text-[11px] text-orange-500 font-medium leading-none mt-0.5">
+                    <p className="text-[11px] text-priority-medium font-medium leading-none mt-0.5">
                       <Flame className="w-3.5 h-3.5 inline-block -mt-0.5" /> {streak} días seguidos
                     </p>
                   )}
@@ -176,7 +176,7 @@ export function HabitTracker({
                 {/* Delete button */}
                 <button
                   onClick={() => onDeleteHabit(habit.id)}
-                  className="w-6 h-6 shrink-0 flex items-center justify-center text-slate-300 dark:text-slate-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100 text-xs"
+                  className="w-6 h-6 shrink-0 flex items-center justify-center text-text-muted hover:text-priority-high hover:bg-priority-high/10 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100 text-xs"
                   aria-label="Eliminar hábito"
                 >
                   <X className="w-3 h-3" />

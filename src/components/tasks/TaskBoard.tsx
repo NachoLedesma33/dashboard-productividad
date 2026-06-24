@@ -108,24 +108,21 @@ const emptyIconColor: Record<string, string> = {
 
 const columnConfig: Record<
   Priority,
-  { title: string; accent: string; headerBg: string; emptyIcon: string }
+  { title: string; accent: string; emptyIcon: string }
 > = {
   high: {
     title: "Alta prioridad",
-    accent: "border-t-red-400",
-    headerBg: "from-red-50 to-transparent dark:from-red-950/30",
+    accent: "border-t-priority-high",
     emptyIcon: "red",
   },
   medium: {
     title: "Media prioridad",
-    accent: "border-t-amber-400",
-    headerBg: "from-amber-50 to-transparent dark:from-amber-950/30",
+    accent: "border-t-priority-medium",
     emptyIcon: "amber",
   },
   low: {
     title: "Baja prioridad",
-    accent: "border-t-slate-400",
-    headerBg: "from-slate-50 to-transparent dark:from-slate-800/30",
+    accent: "border-t-priority-low",
     emptyIcon: "slate",
   },
 };
@@ -160,21 +157,21 @@ function Column({
 
   return (
     <div
-      className={`flex-1 min-w-0 flex flex-col rounded-2xl border border-slate-200/60 dark:border-slate-700/60 border-t-4 ${cfg.accent} bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm overflow-hidden snap-start min-w-[85vw] md:min-w-0`}
+      className={`flex-1 min-w-0 flex flex-col rounded-2xl border border-border border-t-4 ${cfg.accent} bg-surface/60 overflow-hidden snap-start min-w-[85vw] md:min-w-0`}
     >
-      <div className={`px-4 py-3 bg-gradient-to-b ${cfg.headerBg}`}>
+      <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 tracking-tight">
+            <h3 className="text-sm font-bold text-text-primary tracking-tight">
               {title}
             </h3>
-            <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-full px-2 py-0.5">
+            <span className="text-xs font-semibold text-text-muted bg-surface-elevated rounded-full px-2 py-0.5">
               {tasks.length}
             </span>
           </div>
           <Button
             onClick={() => setShowInput(!showInput)}
-            variant="gradient"
+            variant="ghost"
             size="iconSm"
           >
             +
@@ -192,7 +189,7 @@ function Column({
               placeholder="Nueva tarea..."
               autoFocus
             />
-            <Button onClick={handleAdd} variant="gradient" size="sm">
+            <Button onClick={handleAdd} variant="ghost" size="sm">
               ✓
             </Button>
           </div>
@@ -214,7 +211,7 @@ function Column({
               />
             ))}
             {tasks.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-10 text-slate-400 dark:text-slate-600">
+              <div className="flex flex-col items-center justify-center py-10 text-text-muted">
                 <Circle className={`w-6 h-6 mb-2 ${emptyIconColor[cfg.emptyIcon]}`} fill="currentColor" />
                 <p className="text-xs font-medium">Sin tareas</p>
               </div>
@@ -330,7 +327,7 @@ export function TaskBoard({
       <div className="flex items-center justify-end mb-2">
         <button
           onClick={() => setHideCompleted(!hideCompleted)}
-          className="flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+          className="flex items-center gap-1.5 text-xs font-medium text-text-secondary hover:text-text-primary transition-colors"
           aria-label={hideCompleted ? "Mostrar completadas" : "Ocultar completadas"}
         >
           {hideCompleted ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}

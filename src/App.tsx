@@ -146,21 +146,21 @@ function App() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <header className="mb-12 pt-8 animate-slide-in">
-          <div className="glass rounded-3xl p-8 shadow-2xl">
+          <div className="surface-card p-8 shadow-xl">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
               <div className="space-y-2">
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-violet-600 to-pink-600 bg-clip-text text-transparent">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-text-primary">
                   Dashboard de Productividad
                 </h1>
-                <p className="text-lg text-slate-600 dark:text-slate-300 capitalize">
+                <p className="text-lg text-text-secondary capitalize">
                   {today}
                 </p>
               </div>
               <Button
                 onClick={handleResetDemoData}
-                variant="gradient"
+                variant="default"
                 size="lg"
-                className="self-start transform hover:scale-105"
+                className="self-start transform hover:scale-105 font-semibold"
               >
                 Cargar datos demo
               </Button>
@@ -177,7 +177,7 @@ function App() {
           >
             {/* Task Board */}
             <div className="xl:col-span-2">
-              <div className="glass rounded-2xl shadow-xl border-0 p-5 transition-all duration-300">
+              <div className="surface-card p-5 shadow-xl">
                 <TaskBoard
                   tasks={tasks}
                   onToggle={handleToggleTask}
@@ -191,7 +191,7 @@ function App() {
 
             {/* Habits Panel */}
             <div className="xl:col-span-1">
-              <div className="glass rounded-2xl shadow-xl border-0 p-5 transition-all duration-300">
+              <div className="surface-card p-5 shadow-xl">
                 <HabitTracker
                   habits={habits}
                   getTodayStatus={getTodayStatus}
@@ -210,12 +210,12 @@ function App() {
             style={{ animationDelay: "0.2s" }}
           >
             {/* Insights */}
-            <div className="glass rounded-2xl shadow-xl border-0 p-5 transition-all duration-300">
+            <div className="surface-card p-5 shadow-xl">
               <InsightsPanel insights={insights} />
             </div>
 
             {/* Productivity Chart */}
-            <div className="glass rounded-2xl shadow-xl border-0 p-5 transition-all duration-300">
+            <div className="surface-card p-5 shadow-xl">
               <ProductivityChart tasks={tasks} />
             </div>
           </div>
@@ -226,8 +226,8 @@ function App() {
           className="mt-16 pt-8 animate-slide-in"
           style={{ animationDelay: "0.3s" }}
         >
-          <div className="glass rounded-2xl p-6 text-center">
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+          <div className="surface-card p-6 text-center">
+            <p className="text-sm text-text-muted">
               Dashboard de Productividad © 2024
             </p>
           </div>
