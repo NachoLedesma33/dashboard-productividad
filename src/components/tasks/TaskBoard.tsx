@@ -1,19 +1,28 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   DndContext,
-  DragOverlay,
-  closestCenter,
+  pointerWithin,
   useDroppable,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
   type DragEndEvent,
+  type DragStartEvent,
+  type DragMoveEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
   verticalListSortingStrategy,
   useSortable,
+  arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Task, Priority } from "@/types";
 import { TaskCard } from "@/components/ui/TaskCard";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface TaskBoardProps {
   tasks: Task[];
@@ -21,18 +30,17 @@ interface TaskBoardProps {
   onDelete: (id: string) => void;
   onPriorityChange: (id: string, priority: Priority) => void;
   onAddTask: (title: string, priority: Priority) => void;
+  onReorder: (tasks: Task[]) => void;
 }
 
 function SortableTaskCard({
   task,
   onToggle,
   onDelete,
-  setDragOffset,
 }: {
   task: Task;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
-  setDragOffset: (offset: { x: number; y: number } | null) => void;
 }) {
   const {
     attributes,
@@ -43,12 +51,10 @@ function SortableTaskCard({
     isDragging,
   } = useSortable({ id: task.id });
 
-  // Wrap listeners to prevent starting a drag when interacting with controls
-  // that have the `data-no-dnd` attribute (like buttons, checkbox, delete, etc.).
   const filteredListeners = (() => {
     const original = listeners as unknown as Record<string, (e: Event) => void>;
 
-    const onPointerDown = (event: Event) => {
+    const wrappedOnPointerDown = (event: Event) => {
       const target = event?.target as Element | null;
       if (
         target &&
@@ -60,7 +66,7 @@ function SortableTaskCard({
       original.onPointerDown?.(event);
     };
 
-    const onMouseDown = (event: Event) => {
+    const wrappedOnMouseDown = (event: Event) => {
       const target = event?.target as Element | null;
       if (
         target &&
@@ -74,8 +80,8 @@ function SortableTaskCard({
 
     return {
       ...listeners,
-      onPointerDown,
-      onMouseDown,
+      onPointerDown: wrappedOnPointerDown,
+      onMouseDown: wrappedOnMouseDown,
     } as typeof listeners;
   })();
 
@@ -83,43 +89,11 @@ function SortableTaskCard({
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,
+    touchAction: "none",
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...filteredListeners}
-      onPointerDown={(e) => {
-        try {
-          const target = e.target as Element | null;
-          if (
-            target &&
-            typeof target.closest === "function" &&
-            target.closest("[data-no-dnd]")
-          ) {
-            // clicking an internal control — don't set offset nor start drag
-            setDragOffset(null);
-            // still allow the filtered listener to decide (it will ignore if data-no-dnd)
-            filteredListeners?.onPointerDown?.(e as unknown as Event);
-            return;
-          }
-          const el = e.currentTarget as HTMLElement | null;
-          if (el) {
-            const rect = el.getBoundingClientRect();
-            setDragOffset({
-              x: e.clientX - rect.left,
-              y: e.clientY - rect.top,
-            });
-          }
-        } catch {
-          setDragOffset(null);
-        }
-        // Call the original onPointerDown so dnd-kit can start the drag.
-        filteredListeners?.onPointerDown?.(e as unknown as Event);
-      }}
-    >
+    <div ref={setNodeRef} style={style} data-sortable {...attributes} {...filteredListeners}>
       <TaskCard task={task} onToggle={onToggle} onDelete={onDelete} />
     </div>
   );
@@ -156,7 +130,6 @@ function Column({
   onToggle,
   onDelete,
   onAddTask,
-  setDragOffset,
 }: {
   title: string;
   priority: Priority;
@@ -164,12 +137,10 @@ function Column({
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onAddTask: (title: string, priority: Priority) => void;
-  setDragOffset: (offset: { x: number; y: number } | null) => void;
 }) {
   const [showInput, setShowInput] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const cfg = columnConfig[priority];
-  // Make the column a droppable area so dropping into an empty column works
   const { setNodeRef: setDroppableNodeRef } = useDroppable({ id: priority });
 
   const handleAdd = () => {
@@ -182,9 +153,8 @@ function Column({
 
   return (
     <div
-      className={`flex-1 min-w-0 flex flex-col rounded-2xl border border-slate-200/60 dark:border-slate-700/60 border-t-4 ${cfg.accent} bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm overflow-hidden`}
+      className={`flex-1 min-w-0 flex flex-col rounded-2xl border border-slate-200/60 dark:border-slate-700/60 border-t-4 ${cfg.accent} bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm overflow-hidden snap-start min-w-[85vw] md:min-w-0`}
     >
-      {/* Column header */}
       <div className={`px-4 py-3 bg-gradient-to-b ${cfg.headerBg}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -195,39 +165,33 @@ function Column({
               {tasks.length}
             </span>
           </div>
-          <button
+          <Button
             onClick={() => setShowInput(!showInput)}
-            className="w-7 h-7 flex items-center justify-center bg-gradient-to-br from-violet-500 to-pink-500 text-white rounded-lg hover:from-violet-600 hover:to-pink-600 transition-all duration-200 text-sm font-bold shadow-sm hover:shadow-md"
+            variant="gradient"
+            size="iconSm"
           >
             +
-          </button>
+          </Button>
         </div>
       </div>
 
-      {/* Add task input */}
       {showInput && (
         <div className="px-4 pt-3 pb-2 animate-fade-in">
           <div className="flex gap-2">
-            <input
-              type="text"
+            <Input
               value={newTaskTitle}
               onChange={(e) => setNewTaskTitle(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
               placeholder="Nueva tarea..."
-              className="flex-1 px-3 py-2 text-sm border border-violet-200 dark:border-violet-700 rounded-lg bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition-all duration-200"
               autoFocus
             />
-            <button
-              onClick={handleAdd}
-              className="px-3 py-2 bg-gradient-to-r from-violet-500 to-pink-500 text-white rounded-lg text-sm font-medium hover:from-violet-600 hover:to-pink-600 shadow-sm transition-all duration-200"
-            >
+            <Button onClick={handleAdd} variant="gradient" size="sm">
               ✓
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
-      {/* Task list */}
       <div className="flex-1 p-3" ref={setDroppableNodeRef}>
         <SortableContext
           items={tasks.map((t) => t.id)}
@@ -240,7 +204,6 @@ function Column({
                 task={task}
                 onToggle={onToggle}
                 onDelete={onDelete}
-                setDragOffset={setDragOffset}
               />
             ))}
             {tasks.length === 0 && (
@@ -262,134 +225,154 @@ export function TaskBoard({
   onDelete,
   onPriorityChange,
   onAddTask,
+  onReorder,
 }: TaskBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [pointerPos, setPointerPos] = useState<{ x: number; y: number } | null>(
-    null,
-  );
-  const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(
-    null,
-  );
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const offsetRef = useRef({ x: 0, y: 0 });
+  const initialPointerRef = useRef({ x: 0, y: 0 });
 
   const highTasks = tasks.filter((t) => t.priority === "high");
   const mediumTasks = tasks.filter((t) => t.priority === "medium");
   const lowTasks = tasks.filter((t) => t.priority === "low");
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveId(null);
-    // stop tracking pointer when drag ends
-    setPointerPos(null);
-    if (!over) return;
-    const taskId = active.id as string;
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        distance: 5,
+        delay: 200,
+        tolerance: 5,
+      },
+    }),
+  );
 
-    // If over.id is one of the column ids (priority), use that priority.
-    const overId = over.id as string;
-    let newPriority: Priority | null = null;
-    if (overId === "high" || overId === "medium" || overId === "low") {
-      newPriority = overId as Priority;
-    } else {
-      const overTask = tasks.find((t) => t.id === overId);
-      if (!overTask) return;
-      newPriority = overTask.priority;
-    }
-
-    const currentPriority = tasks.find((t) => t.id === taskId)?.priority;
-    if (!currentPriority || !newPriority) return;
-    if (newPriority !== currentPriority) {
-      onPriorityChange(taskId, newPriority);
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+    const e = event.activatorEvent as PointerEvent;
+    initialPointerRef.current = { x: e.clientX, y: e.clientY };
+    const el = (e.target as Element).closest("[data-sortable]") as HTMLElement | null;
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      offsetRef.current = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
     }
   };
 
-  const handleDragStart = (event: { active: { id: unknown } }) => {
-    const id = event.active.id as string;
-    setActiveId(id);
-    // start tracking pointer to position the overlay under the cursor
-    const onPointerMove = (e: PointerEvent) => {
-      setPointerPos({ x: e.clientX, y: e.clientY });
-    };
-    // attach listener
-    window.addEventListener("pointermove", onPointerMove);
-    // store a one-time cleanup when drag ends: remove listener after drag ends
-    const removeListener = () => {
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", removeListener);
-    };
-    window.addEventListener("pointerup", removeListener);
-    // ensure dragOffset remains if set by pointerdown; if none, fallback to center
-    if (!dragOffset && activeId == null) {
-      // nothing — overlay will use pointer position fallback
+  const handleDragMove = (event: DragMoveEvent) => {
+    if (overlayRef.current) {
+      const o = offsetRef.current;
+      const init = initialPointerRef.current;
+      const cx = init.x + event.delta.x;
+      const cy = init.y + event.delta.y;
+      overlayRef.current.style.transform = `translate(${cx - o.x}px, ${cy - o.y}px)`;
     }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+    if (!over) return;
+
+    const taskId = active.id as string;
+    const overId = over.id as string;
+
+    const activeTask = tasks.find((t) => t.id === taskId);
+    if (!activeTask) return;
+
+    let targetPriority: Priority;
+    if (overId === "high" || overId === "medium" || overId === "low") {
+      targetPriority = overId as Priority;
+    } else {
+      const overTask = tasks.find((t) => t.id === overId);
+      if (!overTask) return;
+      targetPriority = overTask.priority;
+    }
+
+    if (targetPriority !== activeTask.priority) {
+      onPriorityChange(taskId, targetPriority);
+    } else if (active.id !== over.id) {
+      const columnTasks = tasks.filter((t) => t.priority === targetPriority);
+      const oldIndex = columnTasks.findIndex((t) => t.id === taskId);
+      const newIndex = columnTasks.findIndex((t) => t.id === overId);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reordered = arrayMove(columnTasks, oldIndex, newIndex);
+        const otherTasks = tasks.filter((t) => t.priority !== targetPriority);
+        onReorder([...otherTasks, ...reordered]);
+      }
+    }
+  };
+
+  const handleDragCancel = () => {
+    setActiveId(null);
   };
 
   const activeTask = activeId ? tasks.find((t) => t.id === activeId) : null;
 
   return (
-    <DndContext
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-      onDragStart={handleDragStart}
-    >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Column
-          title={columnConfig.high.title}
-          priority="high"
-          tasks={highTasks}
-          onToggle={onToggle}
-          onDelete={onDelete}
-          onAddTask={onAddTask}
-          setDragOffset={setDragOffset}
-        />
-        <Column
-          title={columnConfig.medium.title}
-          priority="medium"
-          tasks={mediumTasks}
-          onToggle={onToggle}
-          onDelete={onDelete}
-          onAddTask={onAddTask}
-          setDragOffset={setDragOffset}
-        />
-        <Column
-          title={columnConfig.low.title}
-          priority="low"
-          tasks={lowTasks}
-          onToggle={onToggle}
-          onDelete={onDelete}
-          onAddTask={onAddTask}
-          setDragOffset={setDragOffset}
-        />
-      </div>
+    <>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={pointerWithin}
+        onDragStart={handleDragStart}
+        onDragMove={handleDragMove}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
+        <div className="flex md:grid md:grid-cols-3 gap-4 overflow-x-auto snap-x snap-mandatory md:overflow-visible md:snap-none scroll-smooth">
+          <Column
+            title={columnConfig.high.title}
+            priority="high"
+            tasks={highTasks}
+            onToggle={onToggle}
+            onDelete={onDelete}
+            onAddTask={onAddTask}
+          />
+          <Column
+            title={columnConfig.medium.title}
+            priority="medium"
+            tasks={mediumTasks}
+            onToggle={onToggle}
+            onDelete={onDelete}
+            onAddTask={onAddTask}
+          />
+          <Column
+            title={columnConfig.low.title}
+            priority="low"
+            tasks={lowTasks}
+            onToggle={onToggle}
+            onDelete={onDelete}
+            onAddTask={onAddTask}
+          />
+        </div>
+      </DndContext>
 
-      <DragOverlay>
-        {activeTask && pointerPos ? (
-          // Position overlay at the pointer so it doesn't offset below the cursor
+      {activeTask &&
+        createPortal(
           <div
+            ref={overlayRef}
             style={{
               position: "fixed",
-              left: pointerPos.x,
-              top: pointerPos.y - 8,
-              transform: "translate(-50%, 0)",
+              top: 0,
+              left: 0,
               zIndex: 9999,
+              pointerEvents: "none",
+              willChange: "transform",
             }}
           >
-            <div className="shadow-2xl">
-              <TaskCard
-                task={activeTask}
-                onToggle={() => {}}
-                onDelete={() => {}}
-              />
+            <div className="shadow-2xl rotate-2 opacity-95">
+              <TaskCard task={activeTask} onToggle={() => {}} onDelete={() => {}} />
             </div>
-          </div>
-        ) : activeTask ? (
-          <div className="shadow-2xl">
-            <TaskCard
-              task={activeTask}
-              onToggle={() => {}}
-              onDelete={() => {}}
-            />
-          </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }

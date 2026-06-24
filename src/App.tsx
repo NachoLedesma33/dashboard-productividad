@@ -8,6 +8,7 @@ import { TaskBoard } from "@/components/tasks/TaskBoard";
 import { HabitTracker } from "@/components/habits/HabitTracker";
 import { InsightsPanel } from "@/components/ui/InsightsPanel";
 import { ProductivityChart } from "@/components/charts/ProductivityChart";
+import { Button } from "@/components/ui/button";
 import { generateInsights } from "@/utils/analytics/insightsEngine";
 import { seedDatabase } from "@/utils/seedData";
 import type { Priority } from "@/types";
@@ -31,6 +32,7 @@ function App() {
     toggleTask,
     updatePriority,
     deleteTask,
+    reorderTasks,
   } = useTaskStore();
   const {
     habits,
@@ -91,12 +93,14 @@ function App() {
                   {today}
                 </p>
               </div>
-              <button
+              <Button
                 onClick={handleResetDemoData}
-                className="btn btn-secondary self-start px-6 py-3 bg-gradient-to-r from-violet-500 to-pink-500 text-white rounded-xl hover:from-violet-600 hover:to-pink-600 transform hover:scale-105 transition-all duration-300 shadow-lg"
+                variant="gradient"
+                size="lg"
+                className="self-start transform hover:scale-105"
               >
                 Cargar datos demo
-              </button>
+              </Button>
             </div>
           </div>
         </header>
@@ -117,6 +121,7 @@ function App() {
                   onDelete={deleteTask}
                   onPriorityChange={updatePriority}
                   onAddTask={handleAddTask}
+                  onReorder={reorderTasks}
                 />
               </div>
             </div>
