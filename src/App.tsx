@@ -9,10 +9,11 @@ import { HabitTracker } from "@/components/habits/HabitTracker";
 import { InsightsPanel } from "@/components/ui/InsightsPanel";
 import { ProductivityChart } from "@/components/charts/ProductivityChart";
 import { Button } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/Toaster";
+import { toast } from "@/lib/toast";
 import { generateInsights } from "@/utils/analytics/insightsEngine";
 import { seedDatabase } from "@/utils/seedData";
 import type { Priority } from "@/types";
-import "./App.css";
 
 function LoadingSpinner() {
   return (
@@ -58,8 +59,69 @@ function App() {
   const handleAddTask = useCallback(
     async (title: string, priority: Priority) => {
       await addTask(title, priority);
+      toast("Tarea agregada", "success");
     },
     [addTask],
+  );
+
+  const handleDeleteTask = useCallback(
+    async (id: string) => {
+      await deleteTask(id);
+      toast("Tarea eliminada", "info");
+    },
+    [deleteTask],
+  );
+
+  const handlePriorityChange = useCallback(
+    async (id: string, priority: Priority) => {
+      const task = tasks.find((t) => t.id === id);
+      await updatePriority(id, priority);
+      const labels: Record<Priority, string> = { high: "Alta", medium: "Media", low: "Baja" };
+      toast(task ? `"${task.title}" movida a ${labels[priority]}` : "Prioridad actualizada", "info");
+    },
+    [updatePriority, tasks],
+  );
+
+  const handleReorder = useCallback(
+    async (reordered: import("@/types").Task[]) => {
+      await reorderTasks(reordered);
+    },
+    [reorderTasks],
+  );
+
+  const handleToggleTask = useCallback(
+    async (id: string) => {
+      const task = tasks.find((t) => t.id === id);
+      const wasDone = task?.completed ?? false;
+      await toggleTask(id);
+      toast(wasDone ? "Tarea desmarcada" : "Tarea completada", "success");
+    },
+    [toggleTask, tasks],
+  );
+
+  const handleAddHabit = useCallback(
+    async (name: string) => {
+      await addHabit(name);
+      toast("Hábito agregado", "success");
+    },
+    [addHabit],
+  );
+
+  const handleDeleteHabit = useCallback(
+    async (id: string) => {
+      await deleteHabit(id);
+      toast("Hábito eliminado", "info");
+    },
+    [deleteHabit],
+  );
+
+  const handleToggleHabit = useCallback(
+    async (id: string) => {
+      const wasDone = getTodayStatus(id);
+      await toggleHabit(id);
+      toast(wasDone ? "Hábito desmarcado" : "Hábito completado", "success");
+    },
+    [toggleHabit, getTodayStatus],
   );
 
   const handleResetDemoData = useCallback(async () => {
@@ -118,11 +180,11 @@ function App() {
               <div className="glass rounded-2xl shadow-xl border-0 p-5 transition-all duration-300">
                 <TaskBoard
                   tasks={tasks}
-                  onToggle={toggleTask}
-                  onDelete={deleteTask}
-                  onPriorityChange={updatePriority}
+                  onToggle={handleToggleTask}
+                  onDelete={handleDeleteTask}
+                  onPriorityChange={handlePriorityChange}
                   onAddTask={handleAddTask}
-                  onReorder={reorderTasks}
+                  onReorder={handleReorder}
                 />
               </div>
             </div>
@@ -134,9 +196,9 @@ function App() {
                   habits={habits}
                   getTodayStatus={getTodayStatus}
                   getStreak={getStreak}
-                  onToggle={toggleHabit}
-                  onDeleteHabit={deleteHabit}
-                  onAddHabit={addHabit}
+                  onToggle={handleToggleHabit}
+                  onDeleteHabit={handleDeleteHabit}
+                  onAddHabit={handleAddHabit}
                 />
               </div>
             </div>
@@ -171,6 +233,8 @@ function App() {
           </div>
         </footer>
       </div>
+
+      <Toaster />
     </div>
   );
 }
