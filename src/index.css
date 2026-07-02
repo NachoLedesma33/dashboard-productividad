@@ -69,10 +69,14 @@ html {
 body {
   min-height: 100vh;
   width: 100%;
-  background: linear-gradient(135deg, var(--color-bg-base), var(--color-bg-base-alt));
+  background:
+    radial-gradient(ellipse 80% 60% at 15% 50%, rgba(99, 102, 241, 0.12), transparent),
+    radial-gradient(ellipse 60% 50% at 85% 15%, rgba(16, 185, 129, 0.06), transparent),
+    var(--color-bg-base);
   background-attachment: fixed;
   color: var(--color-text-primary);
 }
+
 
 #root {
   min-height: 100vh;
@@ -174,12 +178,52 @@ p {
   animation: slideInUp 0.6s ease-out forwards;
 }
 
-.animate-pulse-slow {
-  animation: pulse 2s ease-in-out infinite;
+/* ── Skeleton shimmer ── */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-.animate-pop {
-  animation: pop 0.3s ease-out;
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-elevated) 25%,
+    var(--color-border) 50%,
+    var(--color-surface-elevated) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
+
+/* ── Checkmark draw animation ── */
+@keyframes draw-check {
+  from {
+    stroke-dashoffset: 12;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-draw-check {
+  animation: draw-check 0.25s ease-out forwards;
+}
+
+/* ── Toast enter animation ── */
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.animate-toast-enter {
+  animation: toast-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes slideInUp {
@@ -193,24 +237,4 @@ p {
   }
 }
 
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
 
-@keyframes pop {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.2);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
