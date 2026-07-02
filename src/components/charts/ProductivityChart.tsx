@@ -69,8 +69,14 @@ export function ProductivityChart({ tasks }: ProductivityChartProps) {
 
   if (totalCompleted === 0) {
     return (
-      <div className="text-center py-14 text-text-muted">
-        <p className="font-medium mb-2">Completa tareas para ver tu progreso</p>
+      <div className="flex flex-col items-center justify-center py-14 text-text-muted">
+        <svg className="w-16 h-16 mb-4" viewBox="0 0 64 64" fill="none">
+          <rect x="4" y="4" width="56" height="56" rx="8" stroke="currentColor" strokeWidth="1" strokeDasharray="4 3" className="text-border" />
+          <rect x="12" y="20" width="40" height="28" rx="4" stroke="currentColor" strokeWidth="1" className="text-accent/20" />
+          <rect x="20" y="28" width="8" height="12" rx="2" className="fill-accent/10" />
+          <rect x="32" y="24" width="8" height="16" rx="2" className="fill-accent/15" />
+        </svg>
+        <p className="font-medium mb-1">Completa tareas para ver tu progreso</p>
         <p className="text-sm">Las tareas completadas aparecerán aquí como gráfico</p>
       </div>
     );
@@ -83,6 +89,12 @@ export function ProductivityChart({ tasks }: ProductivityChartProps) {
       </h3>
       <ResponsiveContainer width="100%" height={320}>
         <BarChart data={chartData} margin={{ top: 10, right: 20, left: -10, bottom: 0 }}>
+          <defs>
+            <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#818CF8" />
+              <stop offset="100%" stopColor="#6366F1" stopOpacity={0.3} />
+            </linearGradient>
+          </defs>
           <XAxis
             dataKey="day"
             tick={{ fill: '#94A0B8', fontSize: 13 }}
@@ -100,7 +112,7 @@ export function ProductivityChart({ tasks }: ProductivityChartProps) {
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(99, 102, 241, 0.08)' }} />
           <Bar
             dataKey="count"
-            fill="#6366F1"
+            fill="url(#barGradient)"
             radius={[8, 8, 0, 0]}
             name="Completadas"
           />

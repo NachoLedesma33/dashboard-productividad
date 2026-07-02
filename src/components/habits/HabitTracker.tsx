@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { format, isToday, startOfWeek, addDays, isSameDay } from 'date-fns';
+import { format } from 'date-fns';
 import type { Habit } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,33 +22,133 @@ interface HabitTrackerProps {
   onAddHabit: (name: string) => void;
 }
 
-function WeeklyCalendar({ completionDates }: { completionDates: Date[] }) {
+function AggregateHeatmap({ habits }: { habits: Habit[] }) {
   const today = new Date();
-  const weekStart = startOfWeek(today, { weekStartsOn: 1 });
-  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  today.setHours(0, 0, 0, 0);
+
+  const totalWeeks = 20;
+  const cell = 12; // px
+  const gap = 2;   // px
+
+  // Find the Monday of the current week
+  const dow = today.getDay(); // 0=Sun
+  const thisMonday = new Date(today);
+  thisMonday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+
+  // Build weeks array (oldest → newest)
+  const weeks: Date[][] = [];
+  for (let w = 0; w < totalWeeks; w++) {
+    const week: Date[] = [];
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(thisMonday);
+      date.setDate(date.getDate() - (totalWeeks - 1 - w) * 7 + d);
+      date.setHours(0, 0, 0, 0);
+      week.push(date);
+    }
+    weeks.push(week);
+  }
+
+  // Compute month label ranges
+  const monthRanges: { name: string; start: number; end: number }[] = [];
+  let curMonth: number | null = null;
+  let curStart = 0;
+  weeks.forEach((week, i) => {
+    const m = week[3].getMonth();
+    if (curMonth !== null && m !== curMonth) {
+      monthRanges.push({ name: format(new Date(2024, curMonth), 'MMM'), start: curStart, end: i });
+      curStart = i;
+    }
+    curMonth = m;
+  });
+  if (curMonth !== null) monthRanges.push({ name: format(new Date(2024, curMonth), 'MMM'), start: curStart, end: totalWeeks });
+
+  const colW = cell + gap;
+
+  const getCount = (date: Date) =>
+    habits.filter(h =>
+      h.completionDates.some(cd => {
+        const d = new Date(cd);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime() === date.getTime();
+      })
+    ).length;
+
+  const maxCount = habits.length || 1;
+
+  const levels = [
+    'bg-surface-elevated',
+    'bg-success/20',
+    'bg-success/40',
+    'bg-success/65',
+    'bg-success',
+  ];
+
+  const getLevel = (c: number) => {
+    if (c === 0) return 0;
+    const r = c / maxCount;
+    return r <= 0.25 ? 1 : r <= 0.5 ? 2 : r <= 0.75 ? 3 : 4;
+  };
+
+  const dayLabels = ['Lun', '', 'Mié', '', 'Vie', '', ''];
 
   return (
-    <div className="flex gap-0.5 sm:gap-1">
-      {days.map((day) => {
-        const isCompleted = completionDates.some((d) => isSameDay(new Date(d), day));
-        const isTodayDate = isToday(day);
+    <div className="p-4 rounded-xl bg-surface-elevated/20 overflow-x-auto">
+      {/* Header: title + legend */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[10px] font-medium text-text-muted tracking-wide uppercase">Actividad últimos meses</span>
+        <div className="flex items-center gap-1">
+          <span className="text-[9px] text-text-muted">Menos</span>
+          <div className={`w-2.5 h-2.5 rounded-sm ${levels[0]}`} />
+          <div className={`w-2.5 h-2.5 rounded-sm ${levels[1]}`} />
+          <div className={`w-2.5 h-2.5 rounded-sm ${levels[2]}`} />
+          <div className={`w-2.5 h-2.5 rounded-sm ${levels[3]}`} />
+          <div className={`w-2.5 h-2.5 rounded-sm ${levels[4]}`} />
+          <span className="text-[9px] text-text-muted">Más</span>
+        </div>
+      </div>
 
-        return (
+      {/* Month labels */}
+      <div className="flex mb-0.5" style={{ paddingLeft: '33px' }}>
+        {monthRanges.map((m, i) => (
           <div
-            key={day.toISOString()}
-            title={format(day, 'EEEE d MMM')}
-            className={`w-5 h-5 sm:w-7 sm:h-7 shrink-0 rounded-md sm:rounded-lg flex items-center justify-center text-[8px] sm:text-[10px] font-semibold transition-all duration-200 ${
-              isCompleted
-                ? 'bg-accent text-white'
-                : isTodayDate
-                ? 'border border-accent/50 bg-accent-soft text-accent'
-                : 'bg-surface-elevated text-text-muted'
-            }`}
+            key={i}
+            style={{ width: `${(m.end - m.start) * colW - gap}px` }}
+            className="text-[10px] font-medium text-text-muted leading-none shrink-0"
           >
-            {format(day, 'd')}
+            {m.name}
           </div>
-        );
-      })}
+        ))}
+      </div>
+
+      {/* Day rows */}
+      <div className="flex flex-col" style={{ gap: `${gap}px` }}>
+        {dayLabels.map((label, d) => {
+          const todayInThisRow = new Date();
+          todayInThisRow.setHours(0, 0, 0, 0);
+          return (
+            <div key={d} className="flex items-center" style={{ gap: '4px' }}>
+              <span className="w-7 text-[10px] text-text-muted text-right leading-none shrink-0">
+                {label}
+              </span>
+              <div className="flex shrink-0" style={{ gap: `${gap}px` }}>
+                {weeks.map((week, w) => {
+                  const date = week[d];
+                  const c = getCount(date);
+                  const level = getLevel(c);
+                  const isToday = date.getTime() === todayInThisRow.getTime();
+                  return (
+                    <div
+                      key={`${w}-${d}`}
+                      title={`${format(date, 'd MMM yyyy')}: ${c} ${c === 1 ? 'hábito' : 'hábitos'}`}
+                      className={`w-3 h-3 rounded-sm transition-colors duration-200 ${levels[level]} ${isToday ? 'ring-1 ring-white/40' : ''}`}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -126,6 +226,10 @@ export function HabitTracker({
           <p className="text-xs mt-1">Agrega tu primer hábito</p>
         </div>
       ) : (
+        <>
+        <div className="mb-3">
+          <AggregateHeatmap habits={habits} />
+        </div>
         <div className="flex flex-col gap-1.5">
           {habits.map((habit) => {
             const done = getTodayStatus(habit.id);
@@ -133,12 +237,12 @@ export function HabitTracker({
             return (
               <div
                 key={habit.id}
-                className="group flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-elevated/40 hover:bg-surface-elevated/80 hover:shadow-md transition-all duration-200"
+                className="group flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-elevated/40 hover:bg-surface-elevated/80 hover:shadow-md hover:-translate-y-0.5 backdrop-blur-sm transition-all duration-200"
               >
                 {/* Toggle button */}
                 <button
                   onClick={() => onToggle(habit.id)}
-                  className={`w-5 h-5 shrink-0 rounded-md border-2 flex items-center justify-center transition-all duration-200 ${
+                  className={`w-5 h-5 shrink-0 rounded-md border-2 flex items-center justify-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                     done
                       ? 'bg-accent border-accent'
                       : 'border-text-muted hover:border-accent'
@@ -147,7 +251,7 @@ export function HabitTracker({
                 >
                   {done && (
                     <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2 6l3 3 5-5" />
+                      <path className="animate-draw-check" strokeLinecap="round" strokeLinejoin="round" d="M2 6l3 3 5-5" strokeDasharray="12" strokeDashoffset="0" />
                     </svg>
                   )}
                 </button>
@@ -168,15 +272,10 @@ export function HabitTracker({
                   )}
                 </div>
 
-                {/* Weekly mini-calendar */}
-                <div className="shrink-0 overflow-x-auto">
-                  <WeeklyCalendar completionDates={habit.completionDates} />
-                </div>
-
                 {/* Delete button */}
                 <button
                   onClick={() => onDeleteHabit(habit.id)}
-                  className="w-6 h-6 shrink-0 flex items-center justify-center text-text-muted hover:text-priority-high hover:bg-priority-high/10 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100 text-xs"
+                  className="w-6 h-6 shrink-0 flex items-center justify-center text-text-muted hover:text-priority-high hover:bg-priority-high/10 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   aria-label="Eliminar hábito"
                 >
                   <X className="w-3 h-3" />
@@ -185,6 +284,7 @@ export function HabitTracker({
             );
           })}
         </div>
+        </>
       )}
 
     </div>
