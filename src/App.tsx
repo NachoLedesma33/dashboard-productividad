@@ -157,8 +157,8 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen p-6 sm:p-8 lg:p-12">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+      <div className="max-w-[1600px] mx-auto">
         {/* Header */}
         <header className="mb-10 pt-8 animate-slide-in">
           <div className="relative overflow-hidden rounded-[20px] bg-surface/70 backdrop-blur-xl border border-accent/10 shadow-lg">
