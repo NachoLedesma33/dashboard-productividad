@@ -1,4 +1,5 @@
 import type { Task, Priority } from "@/types";
+import { X } from "lucide-react";
 
 interface TaskCardProps {
   task: Task;
@@ -34,7 +35,7 @@ export function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
   const cfg = priorityConfig[task.priority];
 
   return (
-    <div className="group relative flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-elevated/40 hover:bg-surface-elevated/80 hover:shadow-md transition-all duration-200 cursor-grab active:cursor-grabbing">
+    <div className="group relative flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-elevated/40 hover:bg-surface-elevated/80 hover:shadow-md hover:-translate-y-0.5 backdrop-blur-sm transition-all duration-200 cursor-grab active:cursor-grabbing">
       <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
 
       <button
@@ -43,7 +44,7 @@ export function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
           e.stopPropagation();
           onToggle(task.id);
         }}
-        className={`w-5 h-5 shrink-0 rounded-md border-2 flex items-center justify-center transition-all duration-200 ${
+        className={`w-5 h-5 shrink-0 rounded-md border-2 flex items-center justify-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
           task.completed
             ? "bg-accent border-accent"
             : "border-text-muted hover:border-accent"
@@ -59,9 +60,12 @@ export function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
             strokeWidth={2.5}
           >
             <path
+              className="animate-draw-check"
               strokeLinecap="round"
               strokeLinejoin="round"
               d="M2 6l3 3 5-5"
+              strokeDasharray="12"
+              strokeDashoffset="0"
             />
           </svg>
         )}
@@ -92,10 +96,10 @@ export function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
           e.stopPropagation();
           onDelete(task.id);
         }}
-        className="w-6 h-6 shrink-0 flex items-center justify-center text-text-muted hover:text-priority-high hover:bg-priority-high/10 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100 text-xs"
+        className="w-6 h-6 shrink-0 flex items-center justify-center text-text-muted hover:text-priority-high hover:bg-priority-high/10 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-50 hover:!opacity-100 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         aria-label="Eliminar tarea"
       >
-        ✕
+        <X className="w-3.5 h-3.5" />
       </button>
     </div>
   );

@@ -157,7 +157,7 @@ function Column({
 
   return (
     <div
-      className={`flex-1 min-w-0 flex flex-col rounded-2xl border border-border border-t-4 ${cfg.accent} bg-surface/60 overflow-hidden snap-start min-w-[85vw] md:min-w-0`}
+      className={`flex-1 min-w-0 flex flex-col rounded-2xl border border-border/50 border-t-4 ${cfg.accent} bg-surface/40 backdrop-blur-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden snap-start min-w-[85vw] md:min-w-0`}
     >
       <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center justify-between">
@@ -327,7 +327,7 @@ export function TaskBoard({
       <div className="flex items-center justify-end mb-2">
         <button
           onClick={() => setHideCompleted(!hideCompleted)}
-          className="flex items-center gap-1.5 text-xs font-medium text-text-secondary hover:text-text-primary transition-colors"
+          className="flex items-center gap-1.5 text-xs font-medium text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg px-2 py-1 -mx-2"
           aria-label={hideCompleted ? "Mostrar completadas" : "Ocultar completadas"}
         >
           {hideCompleted ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -384,7 +384,7 @@ export function TaskBoard({
               willChange: "transform",
             }}
           >
-            <div className="shadow-2xl rotate-2 opacity-95">
+            <div className="shadow-2xl shadow-accent/10 rotate-3 scale-[1.02] opacity-95 ring-1 ring-accent/20 rounded-xl">
               <TaskCard task={activeTask} onToggle={() => {}} onDelete={() => {}} />
             </div>
           </div>,

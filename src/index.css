@@ -23,7 +23,12 @@
 
   --color-priority-high: #f43f5e;
   --color-priority-medium: #f59e0b;
-  --color-priority-low: #64748b;
+  --color-priority-low: #10b981;
+
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
 
   /* ── shadcn/ui theme tokens (mapped to design tokens) ── */
   --color-background: var(--color-bg-base);
@@ -40,7 +45,7 @@
   --color-muted-foreground: var(--color-text-secondary);
   --color-accent: var(--color-accent);
   --color-accent-foreground: #fff;
-  --color-destructive: #ef4444;
+  --color-destructive: var(--color-error);
   --color-destructive-foreground: #fff;
   --color-border: var(--color-border);
   --color-input: var(--color-border);
