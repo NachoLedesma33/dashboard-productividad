@@ -1,22 +1,30 @@
 import { useToastListener, type Toast } from "@/lib/toast";
+import { CheckCircle2, AlertCircle, Info } from "lucide-react";
 
-const typeStyles: Record<Toast["type"], string> = {
-  success: "bg-emerald-600 text-white",
-  error: "bg-red-600 text-white",
-  info: "bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900",
+const iconMap: Record<Toast["type"], React.ReactNode> = {
+  success: <CheckCircle2 className="w-4 h-4 text-success" />,
+  error: <AlertCircle className="w-4 h-4 text-error" />,
+  info: <Info className="w-4 h-4 text-info" />,
+};
+
+const borderMap: Record<Toast["type"], string> = {
+  success: "border-l-success",
+  error: "border-l-error",
+  info: "border-l-info",
 };
 
 export function Toaster() {
   const toasts = useToastListener();
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2 pointer-events-none">
+    <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2.5 pointer-events-none max-w-sm w-full">
       {toasts.map((t) => (
         <div
           key={t.id}
-          className={`px-4 py-2.5 rounded-xl text-sm font-medium shadow-2xl pointer-events-auto animate-slide-in ${typeStyles[t.type]}`}
+          className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium shadow-2xl shadow-black/20 pointer-events-auto animate-toast-enter backdrop-blur-xl bg-surface/90 border border-border/50 border-l-4 ${borderMap[t.type]}`}
         >
-          {t.message}
+          {iconMap[t.type]}
+          <span className="text-text-primary">{t.message}</span>
         </div>
       ))}
     </div>
