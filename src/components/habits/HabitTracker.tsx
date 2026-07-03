@@ -172,6 +172,7 @@ function AddHabitForm({ onAdd }: { onAdd: (name: string) => void }) {
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Nombre del hábito..."
+        aria-label="Nombre del hábito"
         autoFocus
       />
       <div className="flex gap-2 justify-end">
@@ -207,7 +208,7 @@ export function HabitTracker({
         </div>
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="ghost" size="iconSm">+</Button>
+            <Button variant="ghost" size="iconSm" aria-label="Agregar hábito">+</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
@@ -221,7 +222,7 @@ export function HabitTracker({
       {/* List */}
       {habits.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center py-10 text-text-muted">
-          <Target className="w-6 h-6 mb-2 text-text-muted" />
+          <Target className="w-6 h-6 mb-2 text-text-muted" aria-hidden="true" />
           <p className="text-xs font-medium">Sin hábitos</p>
           <p className="text-xs mt-1">Agrega tu primer hábito</p>
         </div>
@@ -237,7 +238,7 @@ export function HabitTracker({
             return (
               <div
                 key={habit.id}
-                className="group flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-elevated/40 hover:bg-surface-elevated/80 hover:shadow-md hover:-translate-y-0.5 backdrop-blur-sm transition-all duration-200"
+                className="group flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-elevated/40 hover:bg-surface-elevated/80 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
               >
                 {/* Toggle button */}
                 <button
@@ -250,7 +251,7 @@ export function HabitTracker({
                   aria-label="Completar hábito"
                 >
                   {done && (
-                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={2.5}>
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
                       <path className="animate-draw-check" strokeLinecap="round" strokeLinejoin="round" d="M2 6l3 3 5-5" strokeDasharray="12" strokeDashoffset="0" />
                     </svg>
                   )}
@@ -267,7 +268,7 @@ export function HabitTracker({
                   </p>
                   {streak > 0 && (
                     <p className="text-[11px] text-priority-medium font-medium leading-none mt-0.5">
-                      <Flame className="w-3.5 h-3.5 inline-block -mt-0.5" /> {streak} días seguidos
+                      <Flame className="w-3.5 h-3.5 inline-block -mt-0.5" aria-hidden="true" /> {streak} días seguidos
                     </p>
                   )}
                 </div>
@@ -278,7 +279,7 @@ export function HabitTracker({
                   className="w-6 h-6 shrink-0 flex items-center justify-center text-text-muted hover:text-priority-high hover:bg-priority-high/10 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   aria-label="Eliminar hábito"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-3 h-3" aria-hidden="true" />
                 </button>
               </div>
             );

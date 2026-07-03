@@ -1,36 +1,49 @@
-import { useEffect, useMemo, useCallback } from "react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { useEffect, useCallback, useMemo, useState, lazy, Suspense } from "react";
 import { useTaskStore } from "@/store/taskStore";
 import { useHabitStore } from "@/store/habitStore";
 import { useDatabase } from "@/hooks/useDatabase";
-import { TaskBoard } from "@/components/tasks/TaskBoard";
-import { HabitTracker } from "@/components/habits/HabitTracker";
-import { InsightsPanel } from "@/components/ui/InsightsPanel";
-import { ProductivityChart } from "@/components/charts/ProductivityChart";
+import type { Insight } from "@/utils/analytics/insightsEngine";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/Toaster";
 import { toast } from "@/lib/toast";
-import { generateInsights } from "@/utils/analytics/insightsEngine";
-import { seedDatabase } from "@/utils/seedData";
-import { purgeOldCompletionLogs } from "@/db/database";
-import type { Priority } from "@/types";
 import { ClipboardList, CheckCircle2, TrendingUp, Flame } from "lucide-react";
 
-function LoadingSpinner() {
+const TaskBoard = lazy(() => import("@/components/tasks/TaskBoard").then((m) => ({ default: m.TaskBoard })));
+const HabitTracker = lazy(() => import("@/components/habits/HabitTracker").then((m) => ({ default: m.HabitTracker })));
+const InsightsPanel = lazy(() => import("@/components/ui/InsightsPanel").then((m) => ({ default: m.InsightsPanel })));
+const ProductivityChart = lazy(() => import("@/components/charts/ProductivityChart").then((m) => ({ default: m.ProductivityChart })));
+
+type Priority = "low" | "medium" | "high";
+
+const DAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+function TaskBoardSkeleton() {
   return (
-    <div className="flex items-center justify-center min-h-[200px]">
-      <div className="loading-spinner" />
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {["Alta", "Media", "Baja"].map((label) => (
+        <div key={label} className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="h-5 w-2 rounded-full bg-surface-elevated animate-pulse" />
+            <span className="text-sm font-semibold text-text-secondary">{label}</span>
+          </div>
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-[88px] bg-surface-elevated rounded-xl animate-pulse p-4">
+              <div className="h-3 w-3/4 bg-white/5 rounded animate-pulse mb-2" />
+              <div className="h-2 w-1/3 bg-white/5 rounded animate-pulse" />
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
 
 function App() {
-  const { isLoading: dbLoading, resetDatabase } = useDatabase();
+  const { resetDatabase } = useDatabase();
   const {
     tasks,
     completionLog,
-    isLoading: tasksLoading,
     fetchTasks,
     addTask,
     toggleTask,
@@ -40,7 +53,6 @@ function App() {
   } = useTaskStore();
   const {
     habits,
-    isLoading: habitsLoading,
     fetchHabits,
     addHabit,
     toggleHabit,
@@ -50,15 +62,20 @@ function App() {
   } = useHabitStore();
 
   useEffect(() => {
-    purgeOldCompletionLogs(7);
+    import("@/db/database").then(({ purgeOldCompletionLogs }) => {
+      purgeOldCompletionLogs(7);
+    });
     fetchTasks();
     fetchHabits();
   }, [fetchTasks, fetchHabits]);
 
-  const insights = useMemo(
-    () => generateInsights(tasks, habits),
-    [tasks, habits],
-  );
+  const [insights, setInsights] = useState<Insight[]>([]);
+
+  useEffect(() => {
+    import("@/utils/analytics/insightsEngine").then((m) => {
+      setInsights(m.generateInsights(tasks, habits));
+    });
+  }, [tasks, habits]);
 
   const handleAddTask = useCallback(
     async (title: string, priority: Priority) => {
@@ -130,34 +147,32 @@ function App() {
 
   const handleResetDemoData = useCallback(async () => {
     await resetDatabase();
+    const { seedDatabase } = await import("@/utils/seedData");
     await seedDatabase();
     window.location.reload();
   }, [resetDatabase]);
 
-  const isLoading = dbLoading || tasksLoading || habitsLoading;
-  const today = format(new Date(), "EEEE, d 'de' MMMM", { locale: es });
+  const now = new Date();
+  const today = `${DAY_NAMES[now.getDay()]}, ${now.getDate()} de ${MONTH_NAMES[now.getMonth()]}`;
+  const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
 
   const totalTasks = tasks.length;
-  const completedTasks = tasks.filter((t) => t.completed);
+  const completedTasks = useMemo(() => tasks.filter((t) => t.completed), [tasks]);
   const completedCount = completedTasks.length;
   const rate = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
-  const now = new Date();
-  const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
-  const completedToday = completedTasks.filter((t) => {
-    if (!t.completedAt) return false;
-    const d = new Date(t.completedAt);
-    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}` === todayKey;
-  }).length;
-  const bestStreak =
-    habits.length > 0 ? Math.max(...habits.map((h) => getStreak(h.id)), 0) : 0;
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
+  const completedToday = useMemo(
+    () =>
+      completedTasks.filter((t) => {
+        if (!t.completedAt) return false;
+        const d = new Date(t.completedAt);
+        return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}` === todayKey;
+      }).length,
+    [completedTasks, todayKey],
+  );
+  const bestStreak = useMemo(
+    () => (habits.length > 0 ? Math.max(...habits.map((h) => getStreak(h.id)), 0) : 0),
+    [habits, getStreak],
+  );
 
   return (
     <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
@@ -196,7 +211,7 @@ function App() {
           <div className="surface-card p-4 rounded-2xl">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-accent-soft flex items-center justify-center shrink-0">
-                <ClipboardList className="w-5 h-5 text-accent" />
+                <ClipboardList className="w-5 h-5 text-accent" aria-hidden="true" />
               </div>
               <div className="min-w-0">
                 <p className="text-2xl font-bold text-text-primary font-display leading-none mb-1">
@@ -211,7 +226,7 @@ function App() {
           <div className="surface-card p-4 rounded-2xl">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-5 h-5 text-success" />
+                <CheckCircle2 className="w-5 h-5 text-success" aria-hidden="true" />
               </div>
               <div className="min-w-0">
                 <p className="text-2xl font-bold text-text-primary font-display leading-none mb-1">
@@ -226,7 +241,7 @@ function App() {
           <div className="surface-card p-4 rounded-2xl">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center shrink-0">
-                <TrendingUp className="w-5 h-5 text-warning" />
+                <TrendingUp className="w-5 h-5 text-warning" aria-hidden="true" />
               </div>
               <div className="min-w-0">
                 <p className="text-2xl font-bold text-text-primary font-display leading-none mb-1">
@@ -241,7 +256,7 @@ function App() {
           <div className="surface-card p-4 rounded-2xl">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-priority-medium/10 flex items-center justify-center shrink-0">
-                <Flame className="w-5 h-5 text-priority-medium" />
+                <Flame className="w-5 h-5 text-priority-medium" aria-hidden="true" />
               </div>
               <div className="min-w-0">
                 <p className="text-2xl font-bold text-text-primary font-display leading-none mb-1">
@@ -265,28 +280,33 @@ function App() {
             {/* Task Board */}
             <div className="xl:col-span-2">
               <div className="surface-card p-5 shadow-xl">
-                <TaskBoard
-                  tasks={tasks}
-                  onToggle={handleToggleTask}
-                  onDelete={handleDeleteTask}
-                  onPriorityChange={handlePriorityChange}
-                  onAddTask={handleAddTask}
-                  onReorder={handleReorder}
-                />
+                <h2 className="sr-only">Tareas</h2>
+                <Suspense fallback={<TaskBoardSkeleton />}>
+                  <TaskBoard
+                    tasks={tasks}
+                    onToggle={handleToggleTask}
+                    onDelete={handleDeleteTask}
+                    onPriorityChange={handlePriorityChange}
+                    onAddTask={handleAddTask}
+                    onReorder={handleReorder}
+                  />
+                </Suspense>
               </div>
             </div>
 
             {/* Habits Panel */}
             <div className="xl:col-span-1">
               <div className="surface-card p-5 shadow-xl">
-                <HabitTracker
-                  habits={habits}
-                  getTodayStatus={getTodayStatus}
-                  getStreak={getStreak}
-                  onToggle={handleToggleHabit}
-                  onDeleteHabit={handleDeleteHabit}
-                  onAddHabit={handleAddHabit}
-                />
+                <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]"><div className="loading-spinner" /></div>}>
+                  <HabitTracker
+                    habits={habits}
+                    getTodayStatus={getTodayStatus}
+                    getStreak={getStreak}
+                    onToggle={handleToggleHabit}
+                    onDeleteHabit={handleDeleteHabit}
+                    onAddHabit={handleAddHabit}
+                  />
+                </Suspense>
               </div>
             </div>
           </div>
@@ -298,12 +318,16 @@ function App() {
           >
             {/* Insights */}
             <div className="surface-card p-5 shadow-xl">
-              <InsightsPanel insights={insights} />
+              <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]"><div className="loading-spinner" /></div>}>
+                <InsightsPanel insights={insights} />
+              </Suspense>
             </div>
 
             {/* Productivity Chart */}
             <div className="surface-card p-5 shadow-xl">
-              <ProductivityChart completionLog={completionLog} />
+              <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]"><div className="loading-spinner" /></div>}>
+                <ProductivityChart completionLog={completionLog} />
+              </Suspense>
             </div>
           </div>
         </main>

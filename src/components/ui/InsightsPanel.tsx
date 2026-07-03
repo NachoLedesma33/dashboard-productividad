@@ -17,14 +17,14 @@ export function InsightsPanel({ insights }: InsightsPanelProps) {
             {insights.length}
           </span>
         </div>
-        <Lightbulb className="w-5 h-5 text-accent" aria-label="Insights de productividad" />
+        <Lightbulb className="w-5 h-5 text-accent" aria-hidden="true" />
       </div>
 
       {insights.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center py-10 text-text-muted">
           <div className="relative mb-4">
             <div className="w-14 h-14 rounded-full border-2 border-dashed border-accent/20 animate-spin" style={{ animationDuration: '8s' }} />
-            <Lightbulb className="w-5 h-5 absolute inset-0 m-auto text-accent/30" />
+            <Lightbulb className="w-5 h-5 absolute inset-0 m-auto text-accent/30" aria-hidden="true" />
           </div>
           <p className="text-xs font-medium text-center leading-relaxed">
             Completa más tareas para recibir<br />recomendaciones personalizadas

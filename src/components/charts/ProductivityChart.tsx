@@ -66,7 +66,7 @@ export function ProductivityChart({ completionLog }: ProductivityChartProps) {
   if (totalCompleted === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-14 text-text-muted">
-        <svg className="w-16 h-16 mb-4" viewBox="0 0 64 64" fill="none">
+        <svg className="w-16 h-16 mb-4" viewBox="0 0 64 64" fill="none" aria-hidden="true">
           <rect x="4" y="4" width="56" height="56" rx="8" stroke="currentColor" strokeWidth="1" strokeDasharray="4 3" className="text-border" />
           <rect x="12" y="20" width="40" height="28" rx="4" stroke="currentColor" strokeWidth="1" className="text-accent/20" />
           <rect x="20" y="28" width="8" height="12" rx="2" className="fill-accent/10" />

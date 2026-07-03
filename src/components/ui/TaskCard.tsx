@@ -1,3 +1,4 @@
+import { memo, useCallback } from "react";
 import type { Task, Priority } from "@/types";
 import { X } from "lucide-react";
 
@@ -31,19 +32,32 @@ const priorityConfig: Record<
   },
 };
 
-export function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
+export const TaskCard = memo(function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
   const cfg = priorityConfig[task.priority];
 
+  const handleToggle = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onToggle(task.id);
+    },
+    [task.id, onToggle],
+  );
+
+  const handleDelete = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onDelete(task.id);
+    },
+    [task.id, onDelete],
+  );
+
   return (
-    <div className="group relative flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-elevated/40 hover:bg-surface-elevated/80 hover:shadow-md hover:-translate-y-0.5 backdrop-blur-sm transition-all duration-200 cursor-grab active:cursor-grabbing">
+    <div className="group relative flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-elevated/40 hover:bg-surface-elevated/80 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-grab active:cursor-grabbing">
       <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
 
       <button
         data-no-dnd
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggle(task.id);
-        }}
+        onClick={handleToggle}
         className={`w-5 h-5 shrink-0 rounded-md border-2 flex items-center justify-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
           task.completed
             ? "bg-accent border-accent"
@@ -58,6 +72,7 @@ export function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
             viewBox="0 0 12 12"
             stroke="currentColor"
             strokeWidth={2.5}
+            aria-hidden="true"
           >
             <path
               className="animate-draw-check"
@@ -92,15 +107,12 @@ export function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
 
       <button
         data-no-dnd
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(task.id);
-        }}
+        onClick={handleDelete}
         className="w-6 h-6 shrink-0 flex items-center justify-center text-text-muted hover:text-priority-high hover:bg-priority-high/10 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-50 hover:!opacity-100 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         aria-label="Eliminar tarea"
       >
-        <X className="w-3.5 h-3.5" />
+        <X className="w-3.5 h-3.5" aria-hidden="true" />
       </button>
     </div>
   );
-}
+});

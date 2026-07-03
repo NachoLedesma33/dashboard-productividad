@@ -1,6 +1,6 @@
 import { create, type StateCreator } from 'zustand';
 import type { Habit } from '@/types';
-import { addHabit as dbAddHabit, toggleHabitToday as dbToggleHabit, deleteHabit as dbDeleteHabit, getAllHabits as dbGetAllHabits } from '@/db/database';
+import { getDb } from '@/db/lazyDb';
 
 function getTodayStart(): Date {
   const today = new Date();
@@ -104,7 +104,8 @@ export const useHabitStore = create<HabitState>()(devLogger((set, get) => ({
   fetchHabits: async () => {
     set({ isLoading: true });
     try {
-      const habits = await dbGetAllHabits();
+      const { getAllHabits } = await getDb();
+      const habits = await getAllHabits();
       set({ habits, isLoading: false });
     } catch (error) {
       console.error('[HabitStore] Fetch error:', error);
@@ -118,18 +119,20 @@ export const useHabitStore = create<HabitState>()(devLogger((set, get) => ({
       name,
       completionDates: [],
     };
-    
+
+    const { addHabit: dbAddHabit } = await getDb();
     await dbAddHabit(newHabit);
     set((state) => ({ habits: [...state.habits, newHabit] }));
   },
 
   toggleHabit: async (habitId) => {
-    await dbToggleHabit(habitId);
-    
+    const { toggleHabitToday } = await getDb();
+    await toggleHabitToday(habitId);
+
     set((state) => ({
       habits: state.habits.map((h) => {
         if (h.id !== habitId) return h;
-        
+
         const today = getTodayStart();
         const existingIndex = h.completionDates.findIndex((date) => {
           const d = new Date(date);
@@ -153,6 +156,7 @@ export const useHabitStore = create<HabitState>()(devLogger((set, get) => ({
   },
 
   deleteHabit: async (habitId) => {
+    const { deleteHabit: dbDeleteHabit } = await getDb();
     await dbDeleteHabit(habitId);
     set((state) => ({ habits: state.habits.filter((h) => h.id !== habitId) }));
   },

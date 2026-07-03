@@ -11,6 +11,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'inline',
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'Dashboard de Productividad',
@@ -39,6 +40,24 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) {
+            return 'vendor-react';
+          }
+        },
+      },
+    },
+    modulePreload: {
+      resolveDependencies: (filename, deps) => {
+        const exclude = filename.includes('TaskBoard') || filename.includes('vendor-dnd');
+        if (exclude) return [];
+        return deps.filter(dep => !dep.includes('vendor-dnd'));
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

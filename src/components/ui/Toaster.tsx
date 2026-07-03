@@ -2,9 +2,9 @@ import { useToastListener, type Toast } from "@/lib/toast";
 import { CheckCircle2, AlertCircle, Info } from "lucide-react";
 
 const iconMap: Record<Toast["type"], React.ReactNode> = {
-  success: <CheckCircle2 className="w-4 h-4 text-success" />,
-  error: <AlertCircle className="w-4 h-4 text-error" />,
-  info: <Info className="w-4 h-4 text-info" />,
+  success: <CheckCircle2 className="w-4 h-4 text-success" aria-hidden="true" />,
+  error: <AlertCircle className="w-4 h-4 text-error" aria-hidden="true" />,
+  info: <Info className="w-4 h-4 text-info" aria-hidden="true" />,
 };
 
 const borderMap: Record<Toast["type"], string> = {
@@ -17,7 +17,7 @@ export function Toaster() {
   const toasts = useToastListener();
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2.5 pointer-events-none max-w-sm w-full">
+    <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2.5 pointer-events-none max-w-sm w-full" role="status" aria-live="polite" aria-atomic="true">
       {toasts.map((t) => (
         <div
           key={t.id}

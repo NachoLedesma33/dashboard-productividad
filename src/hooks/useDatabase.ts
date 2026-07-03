@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import Dexie from 'dexie';
-import { db } from '@/db/database';
+import type Dexie from 'dexie';
+import { getDb } from '@/db/lazyDb';
 
 interface UseDatabaseReturn {
-  db: Dexie;
+  db: Dexie | null;
   isLoading: boolean;
   error: Error | null;
   resetDatabase: () => Promise<void>;
@@ -13,12 +13,14 @@ let dbInitialized = false;
 let initPromise: Promise<void> | null = null;
 
 export function useDatabase(): UseDatabaseReturn {
+  const [db, setDb] = useState<Dexie | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const resetDatabase = async () => {
-    await db.delete();
-    db.open();
+    const m = await getDb();
+    await m.db.delete();
+    m.db.open();
     dbInitialized = false;
     setIsLoading(true);
   };
@@ -27,9 +29,12 @@ export function useDatabase(): UseDatabaseReturn {
     if (dbInitialized) return;
 
     if (!initPromise) {
-      initPromise = db.open().then(() => {
-        dbInitialized = true;
-        setIsLoading(false);
+      initPromise = getDb().then((m) => {
+        setDb(m.db);
+        return m.db.open().then(() => {
+          dbInitialized = true;
+          setIsLoading(false);
+        });
       }).catch((err) => {
         setError(err);
         setIsLoading(false);

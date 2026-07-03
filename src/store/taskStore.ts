@@ -1,16 +1,6 @@
 import { create, type StateCreator } from 'zustand';
+import { getDb } from '@/db/lazyDb';
 import type { Task, CompletionLogEntry } from '@/types';
-import {
-  getAllTasks,
-  addTask as dbAddTask,
-  updateTask as dbUpdateTask,
-  deleteTask as dbDeleteTask,
-  bulkUpdateTasks,
-  getCompletionLogs,
-  addCompletionLog,
-  removeTodayCompletionLog,
-  formatDateKey,
-} from '@/db/database';
 
 interface TaskState {
   tasks: Task[];
@@ -45,6 +35,7 @@ export const useTaskStore = create<TaskState>()(devLogger((set, get) => ({
   fetchTasks: async () => {
     set({ isLoading: true });
     try {
+      const { getAllTasks, getCompletionLogs } = await getDb();
       const [tasks, completionLog] = await Promise.all([
         getAllTasks(),
         getCompletionLogs(),
@@ -65,7 +56,8 @@ export const useTaskStore = create<TaskState>()(devLogger((set, get) => ({
       completedAt: null,
       createdAt: new Date(),
     };
-    
+
+    const { addTask: dbAddTask } = await getDb();
     await dbAddTask(newTask);
     set((state) => ({ tasks: [...state.tasks, newTask] }));
   },
@@ -73,6 +65,8 @@ export const useTaskStore = create<TaskState>()(devLogger((set, get) => ({
   toggleTask: async (id) => {
     const task = get().tasks.find((t) => t.id === id);
     if (!task) return;
+
+    const { updateTask: dbUpdateTask, addCompletionLog, removeTodayCompletionLog, formatDateKey } = await getDb();
 
     const updatedCompleted = !task.completed;
     const updatedCompletedAt = updatedCompleted ? new Date() : null;
@@ -106,8 +100,9 @@ export const useTaskStore = create<TaskState>()(devLogger((set, get) => ({
   },
 
   updatePriority: async (id, priority) => {
+    const { updateTask: dbUpdateTask } = await getDb();
     await dbUpdateTask(id, { priority });
-    
+
     set((state) => ({
       tasks: state.tasks.map((t) => (t.id === id ? { ...t, priority } : t)),
     }));
@@ -115,12 +110,14 @@ export const useTaskStore = create<TaskState>()(devLogger((set, get) => ({
 
   reorderTasks: async (tasks) => {
     set({ tasks });
+    const { bulkUpdateTasks } = await getDb();
     await bulkUpdateTasks(tasks);
   },
 
   deleteTask: async (id) => {
+    const { deleteTask: dbDeleteTask } = await getDb();
     await dbDeleteTask(id);
-    
+
     set((state) => ({
       tasks: state.tasks.filter((t) => t.id !== id),
     }));

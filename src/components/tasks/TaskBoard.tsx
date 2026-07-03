@@ -157,7 +157,7 @@ function Column({
 
   return (
     <div
-      className={`flex-1 min-w-0 flex flex-col rounded-2xl border border-border/50 border-t-4 ${cfg.accent} bg-surface/40 backdrop-blur-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden snap-start min-w-[85vw] md:min-w-0`}
+      className={`flex-1 min-w-0 flex flex-col rounded-2xl border border-border/50 border-t-4 ${cfg.accent} bg-surface/60 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden snap-start min-w-[85vw] md:min-w-0`}
     >
       <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center justify-between">
@@ -173,6 +173,7 @@ function Column({
             onClick={() => setShowInput(!showInput)}
             variant="ghost"
             size="iconSm"
+            aria-label="Agregar tarea"
           >
             +
           </Button>
@@ -187,9 +188,10 @@ function Column({
               onChange={(e) => setNewTaskTitle(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
               placeholder="Nueva tarea..."
+              aria-label="Nueva tarea"
               autoFocus
             />
-            <Button onClick={handleAdd} variant="ghost" size="sm">
+            <Button onClick={handleAdd} variant="ghost" size="sm" aria-label="Confirmar tarea">
               ✓
             </Button>
           </div>
@@ -212,7 +214,7 @@ function Column({
             ))}
             {tasks.length === 0 && (
               <div className="flex flex-col items-center justify-center py-10 text-text-muted">
-                <Circle className={`w-6 h-6 mb-2 ${emptyIconColor[cfg.emptyIcon]}`} fill="currentColor" />
+                <Circle className={`w-6 h-6 mb-2 ${emptyIconColor[cfg.emptyIcon]}`} fill="currentColor" aria-hidden="true" />
                 <p className="text-xs font-medium">Sin tareas</p>
               </div>
             )}
@@ -330,7 +332,7 @@ export function TaskBoard({
           className="flex items-center gap-1.5 text-xs font-medium text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg px-2 py-1 -mx-2"
           aria-label={hideCompleted ? "Mostrar completadas" : "Ocultar completadas"}
         >
-          {hideCompleted ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+          {hideCompleted ? <EyeOff className="w-3.5 h-3.5" aria-hidden="true" /> : <Eye className="w-3.5 h-3.5" aria-hidden="true" />}
           {hideCompleted ? "Mostrar completadas" : "Ocultar completadas"}
         </button>
       </div>
