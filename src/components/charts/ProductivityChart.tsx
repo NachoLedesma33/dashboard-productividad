@@ -14,6 +14,7 @@ import type { CompletionLogEntry } from '@/types';
 
 interface ProductivityChartProps {
   completionLog: CompletionLogEntry[];
+  totalTasks: number;
 }
 
 interface ChartData {
@@ -59,11 +60,11 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<
   );
 }
 
-export function ProductivityChart({ completionLog }: ProductivityChartProps) {
+export function ProductivityChart({ completionLog, totalTasks }: ProductivityChartProps) {
   const chartData = generateChartData(completionLog);
   const totalCompleted = chartData.reduce((acc, d) => acc + d.count, 0);
 
-  if (totalCompleted === 0) {
+  if (totalTasks === 0 && totalCompleted === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-14 text-text-muted">
         <svg className="w-16 h-16 mb-4" viewBox="0 0 64 64" fill="none" aria-hidden="true">
@@ -100,6 +101,7 @@ export function ProductivityChart({ completionLog }: ProductivityChartProps) {
           />
           <YAxis
             allowDecimals={false}
+            domain={[0, Math.max(totalTasks, 1)]}
             tick={{ fill: '#94A0B8', fontSize: 13 }}
             axisLine={{ stroke: '#242C3D' }}
             tickLine={false}

@@ -10,7 +10,6 @@ interface UseDatabaseReturn {
 }
 
 let dbInitialized = false;
-let initPromise: Promise<void> | null = null;
 
 export function useDatabase(): UseDatabaseReturn {
   const [db, setDb] = useState<Dexie | null>(null);
@@ -20,7 +19,7 @@ export function useDatabase(): UseDatabaseReturn {
   const resetDatabase = async () => {
     const m = await getDb();
     await m.db.delete();
-    m.db.open();
+    await m.db.open();
     dbInitialized = false;
     setIsLoading(true);
   };
@@ -28,20 +27,16 @@ export function useDatabase(): UseDatabaseReturn {
   useEffect(() => {
     if (dbInitialized) return;
 
-    if (!initPromise) {
-      initPromise = getDb().then((m) => {
+    getDb()
+      .then((m) => {
         setDb(m.db);
-        return m.db.open().then(() => {
-          dbInitialized = true;
-          setIsLoading(false);
-        });
-      }).catch((err) => {
+        dbInitialized = true;
+        setIsLoading(false);
+      })
+      .catch((err) => {
         setError(err);
         setIsLoading(false);
       });
-    }
-
-    initPromise.catch(() => {});
   }, []);
 
   return { db, isLoading, error, resetDatabase };

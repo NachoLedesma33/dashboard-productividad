@@ -326,7 +326,7 @@ function App() {
             {/* Productivity Chart */}
             <div className="surface-card p-5 shadow-xl">
               <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]"><div className="loading-spinner" /></div>}>
-                <ProductivityChart completionLog={completionLog} />
+                <ProductivityChart completionLog={completionLog} totalTasks={totalTasks} />
               </Suspense>
             </div>
           </div>

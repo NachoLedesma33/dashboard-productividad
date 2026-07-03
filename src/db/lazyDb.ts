@@ -1,6 +1,14 @@
-let mod: Promise<typeof import("./database")> | null = null;
+let dbReady: Promise<typeof import("./database")> | null = null;
 
 export function getDb(): Promise<typeof import("./database")> {
-  if (!mod) mod = import("./database");
-  return mod;
+  if (!dbReady) {
+    dbReady = import("./database").then((m) =>
+      m.db.open().then(() => m)
+    ).catch((err) => {
+      console.error("[LazyDb] Failed to load or open database:", err);
+      dbReady = null;
+      throw err;
+    });
+  }
+  return dbReady;
 }
