@@ -1,9 +1,20 @@
 import { create, type StateCreator } from 'zustand';
-import type { Task } from '@/types';
-import { getAllTasks, addTask as dbAddTask, updateTask as dbUpdateTask, deleteTask as dbDeleteTask, bulkUpdateTasks } from '@/db/database';
+import type { Task, CompletionLogEntry } from '@/types';
+import {
+  getAllTasks,
+  addTask as dbAddTask,
+  updateTask as dbUpdateTask,
+  deleteTask as dbDeleteTask,
+  bulkUpdateTasks,
+  getCompletionLogs,
+  addCompletionLog,
+  removeTodayCompletionLog,
+  formatDateKey,
+} from '@/db/database';
 
 interface TaskState {
   tasks: Task[];
+  completionLog: CompletionLogEntry[];
   isLoading: boolean;
   fetchTasks: () => Promise<void>;
   addTask: (title: string, priority: Task['priority']) => Promise<void>;
@@ -28,13 +39,17 @@ const devLogger: (config: TaskStateCreator) => TaskStateCreator = (config) => (s
 
 export const useTaskStore = create<TaskState>()(devLogger((set, get) => ({
   tasks: [],
+  completionLog: [],
   isLoading: false,
 
   fetchTasks: async () => {
     set({ isLoading: true });
     try {
-      const tasks = await getAllTasks();
-      set({ tasks, isLoading: false });
+      const [tasks, completionLog] = await Promise.all([
+        getAllTasks(),
+        getCompletionLogs(),
+      ]);
+      set({ tasks, completionLog, isLoading: false });
     } catch (error) {
       console.error('[TaskStore] Fetch error:', error);
       set({ isLoading: false });
@@ -63,12 +78,31 @@ export const useTaskStore = create<TaskState>()(devLogger((set, get) => ({
     const updatedCompletedAt = updatedCompleted ? new Date() : null;
 
     await dbUpdateTask(id, { completed: updatedCompleted, completedAt: updatedCompletedAt });
-    
-    set((state) => ({
-      tasks: state.tasks.map((t) =>
-        t.id === id ? { ...t, completed: updatedCompleted, completedAt: updatedCompletedAt } : t
-      ),
-    }));
+
+    if (updatedCompleted) {
+      await addCompletionLog(id);
+      const dateKey = formatDateKey(new Date());
+      set((state) => ({
+        tasks: state.tasks.map((t) =>
+          t.id === id ? { ...t, completed: updatedCompleted, completedAt: updatedCompletedAt } : t
+        ),
+        completionLog: [
+          ...state.completionLog,
+          { id: Date.now(), taskId: id, dateKey, createdAt: new Date() },
+        ],
+      }));
+    } else {
+      await removeTodayCompletionLog(id);
+      const dateKey = formatDateKey(new Date());
+      set((state) => ({
+        tasks: state.tasks.map((t) =>
+          t.id === id ? { ...t, completed: updatedCompleted, completedAt: updatedCompletedAt } : t
+        ),
+        completionLog: state.completionLog.filter(
+          (entry) => !(entry.taskId === id && entry.dateKey === dateKey)
+        ),
+      }));
+    }
   },
 
   updatePriority: async (id, priority) => {

@@ -14,3 +14,10 @@ export interface Habit {
   name: string;
   completionDates: Date[];
 }
+
+export interface CompletionLogEntry {
+  id?: number;
+  taskId: string;
+  dateKey: string;
+  createdAt: Date;
+}

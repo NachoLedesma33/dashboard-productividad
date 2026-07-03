@@ -9,13 +9,11 @@ import {
 import {
   format,
   subDays,
-  startOfDay,
-  isSameDay,
 } from 'date-fns';
-import type { Task } from '@/types';
+import type { CompletionLogEntry } from '@/types';
 
 interface ProductivityChartProps {
-  tasks: Task[];
+  completionLog: CompletionLogEntry[];
 }
 
 interface ChartData {
@@ -24,19 +22,17 @@ interface ChartData {
   date: string;
 }
 
-function generateChartData(tasks: Task[]): ChartData[] {
+function generateChartData(completionLog: CompletionLogEntry[]): ChartData[] {
   const today = new Date();
   const data: ChartData[] = [];
 
   for (let i = 6; i >= 0; i--) {
     const date = subDays(today, i);
-    const dayStart = startOfDay(date);
+    const dateKey = format(date, 'yyyy-MM-dd');
 
-    const completedCount = tasks.filter((task) => {
-      if (!task.completed || !task.completedAt) return false;
-      const completedDate = startOfDay(new Date(task.completedAt));
-      return isSameDay(completedDate, dayStart);
-    }).length;
+    const completedCount = completionLog.filter(
+      (entry) => entry.dateKey === dateKey
+    ).length;
 
     data.push({
       day: format(date, 'EEE'),
@@ -63,8 +59,8 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<
   );
 }
 
-export function ProductivityChart({ tasks }: ProductivityChartProps) {
-  const chartData = generateChartData(tasks);
+export function ProductivityChart({ completionLog }: ProductivityChartProps) {
+  const chartData = generateChartData(completionLog);
   const totalCompleted = chartData.reduce((acc, d) => acc + d.count, 0);
 
   if (totalCompleted === 0) {

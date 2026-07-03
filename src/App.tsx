@@ -13,6 +13,7 @@ import { Toaster } from "@/components/ui/Toaster";
 import { toast } from "@/lib/toast";
 import { generateInsights } from "@/utils/analytics/insightsEngine";
 import { seedDatabase } from "@/utils/seedData";
+import { purgeOldCompletionLogs } from "@/db/database";
 import type { Priority } from "@/types";
 import { ClipboardList, CheckCircle2, TrendingUp, Flame } from "lucide-react";
 
@@ -28,6 +29,7 @@ function App() {
   const { isLoading: dbLoading, resetDatabase } = useDatabase();
   const {
     tasks,
+    completionLog,
     isLoading: tasksLoading,
     fetchTasks,
     addTask,
@@ -48,6 +50,7 @@ function App() {
   } = useHabitStore();
 
   useEffect(() => {
+    purgeOldCompletionLogs(7);
     fetchTasks();
     fetchHabits();
   }, [fetchTasks, fetchHabits]);
@@ -300,7 +303,7 @@ function App() {
 
             {/* Productivity Chart */}
             <div className="surface-card p-5 shadow-xl">
-              <ProductivityChart tasks={tasks} />
+              <ProductivityChart completionLog={completionLog} />
             </div>
           </div>
         </main>

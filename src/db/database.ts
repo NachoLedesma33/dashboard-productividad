@@ -1,15 +1,17 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Task, Habit } from '@/types';
+import type { Task, Habit, CompletionLogEntry } from '@/types';
 
 class ProductivityDatabase extends Dexie {
   tasks!: EntityTable<Task, 'id'>;
   habits!: EntityTable<Habit, 'id'>;
+  completionLog!: EntityTable<CompletionLogEntry, 'id'>;
 
   constructor() {
     super('productivity-db');
-    this.version(1).stores({
+    this.version(2).stores({
       tasks: 'id, priority, completedAt',
       habits: 'id',
+      completionLog: '++id, dateKey, taskId',
     });
   }
 }
@@ -75,4 +77,38 @@ export async function deleteHabit(id: string): Promise<void> {
 
 export async function getAllHabits(): Promise<Habit[]> {
   return db.habits.toArray();
+}
+
+export function formatDateKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+export async function addCompletionLog(taskId: string, date: Date = new Date()): Promise<void> {
+  const dateKey = formatDateKey(date);
+  const existing = await db.completionLog.where({ taskId, dateKey }).first();
+  if (!existing) {
+    await db.completionLog.add({ taskId, dateKey, createdAt: new Date() });
+  }
+}
+
+export async function removeTodayCompletionLog(taskId: string): Promise<void> {
+  const dateKey = formatDateKey(new Date());
+  const entry = await db.completionLog.where({ taskId, dateKey }).first();
+  if (entry?.id) {
+    await db.completionLog.delete(entry.id);
+  }
+}
+
+export async function getCompletionLogs(): Promise<CompletionLogEntry[]> {
+  return db.completionLog.toArray();
+}
+
+export async function purgeOldCompletionLogs(daysToKeep: number = 7): Promise<void> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - daysToKeep);
+  const cutoffKey = formatDateKey(cutoff);
+  await db.completionLog.where('dateKey').below(cutoffKey).delete();
 }
