@@ -218,7 +218,7 @@ function App() {
                   {totalTasks}
                 </p>
                 <p className="text-xs text-text-secondary font-medium truncate">
-                  Tareas totales
+                  Tareas totales hoy
                 </p>
               </div>
             </div>

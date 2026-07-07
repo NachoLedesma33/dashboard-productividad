@@ -35,12 +35,34 @@ export const useTaskStore = create<TaskState>()(devLogger((set, get) => ({
   fetchTasks: async () => {
     set({ isLoading: true });
     try {
-      const { getAllTasks, getCompletionLogs } = await getDb();
+      const { getAllTasks, updateTask, getCompletionLogs } = await getDb();
       const [tasks, completionLog] = await Promise.all([
         getAllTasks(),
         getCompletionLogs(),
       ]);
-      set({ tasks, completionLog, isLoading: false });
+
+      const today = new Date();
+      const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+      const staleTasks = tasks.filter(
+        (t) => t.completed && t.completedAt && (() => {
+          const d = new Date(t.completedAt!);
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` !== todayKey;
+        })()
+      );
+
+      if (staleTasks.length > 0) {
+        await Promise.all(staleTasks.map((t) => updateTask(t.id, { completed: false, completedAt: null })));
+        set({
+          tasks: tasks.map((t) =>
+            staleTasks.some((s) => s.id === t.id) ? { ...t, completed: false, completedAt: null } : t
+          ),
+          completionLog,
+          isLoading: false,
+        });
+      } else {
+        set({ tasks, completionLog, isLoading: false });
+      }
     } catch (error) {
       console.error('[TaskStore] Fetch error:', error);
       set({ isLoading: false });
