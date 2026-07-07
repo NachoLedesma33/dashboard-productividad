@@ -7,6 +7,7 @@ export interface Task {
   completed: boolean;
   completedAt: Date | null;
   createdAt: Date;
+  recurringDays?: number[];
 }
 
 export interface Habit {

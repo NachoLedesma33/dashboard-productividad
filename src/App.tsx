@@ -78,8 +78,8 @@ function App() {
   }, [tasks, habits]);
 
   const handleAddTask = useCallback(
-    async (title: string, priority: Priority) => {
-      await addTask(title, priority);
+    async (title: string, priority: Priority, recurringDays?: number[]) => {
+      await addTask(title, priority, recurringDays);
       toast("Tarea agregada", "success");
     },
     [addTask],

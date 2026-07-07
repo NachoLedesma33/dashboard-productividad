@@ -7,7 +7,7 @@ interface TaskState {
   completionLog: CompletionLogEntry[];
   isLoading: boolean;
   fetchTasks: () => Promise<void>;
-  addTask: (title: string, priority: Task['priority']) => Promise<void>;
+  addTask: (title: string, priority: Task['priority'], recurringDays?: number[]) => Promise<void>;
   toggleTask: (id: string) => Promise<void>;
   updatePriority: (id: string, priority: Task['priority']) => Promise<void>;
   reorderTasks: (tasks: Task[]) => Promise<void>;
@@ -35,41 +35,54 @@ export const useTaskStore = create<TaskState>()(devLogger((set, get) => ({
   fetchTasks: async () => {
     set({ isLoading: true });
     try {
-      const { getAllTasks, updateTask, getCompletionLogs } = await getDb();
+      const { getAllTasks, getCompletionLogs, updateTask, deleteTask, formatDateKey } = await getDb();
       const [tasks, completionLog] = await Promise.all([
         getAllTasks(),
         getCompletionLogs(),
       ]);
 
       const today = new Date();
-      const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      const todayKey = formatDateKey(today);
+      const todayDay = today.getDay();
 
-      const staleTasks = tasks.filter(
-        (t) => t.completed && t.completedAt && (() => {
-          const d = new Date(t.completedAt!);
-          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` !== todayKey;
-        })()
+      const toDelete: string[] = [];
+      const toUncheck: string[] = [];
+
+      for (const task of tasks) {
+        if (!task.completed) continue;
+        if (!task.completedAt) continue;
+
+        const taskDayKey = formatDateKey(new Date(task.completedAt));
+        if (taskDayKey !== todayKey) {
+          const hasSchedule = task.recurringDays && task.recurringDays.length > 0;
+          if (hasSchedule && task.recurringDays!.includes(todayDay)) {
+            toUncheck.push(task.id);
+          } else {
+            toDelete.push(task.id);
+          }
+        }
+      }
+
+      if (toDelete.length > 0) {
+        await Promise.all(toDelete.map((id) => deleteTask(id)));
+      }
+      if (toUncheck.length > 0) {
+        await Promise.all(toUncheck.map((id) => updateTask(id, { completed: false, completedAt: null })));
+      }
+
+      const filteredTasks = tasks.filter((t) => !toDelete.includes(t.id));
+      const mappedTasks = filteredTasks.map((t) =>
+        toUncheck.includes(t.id) ? { ...t, completed: false, completedAt: null } : t
       );
 
-      if (staleTasks.length > 0) {
-        await Promise.all(staleTasks.map((t) => updateTask(t.id, { completed: false, completedAt: null })));
-        set({
-          tasks: tasks.map((t) =>
-            staleTasks.some((s) => s.id === t.id) ? { ...t, completed: false, completedAt: null } : t
-          ),
-          completionLog,
-          isLoading: false,
-        });
-      } else {
-        set({ tasks, completionLog, isLoading: false });
-      }
+      set({ tasks: mappedTasks, completionLog, isLoading: false });
     } catch (error) {
       console.error('[TaskStore] Fetch error:', error);
       set({ isLoading: false });
     }
   },
 
-  addTask: async (title, priority) => {
+  addTask: async (title, priority, recurringDays) => {
     const newTask: Task = {
       id: crypto.randomUUID(),
       title,
@@ -77,6 +90,7 @@ export const useTaskStore = create<TaskState>()(devLogger((set, get) => ({
       completed: false,
       completedAt: null,
       createdAt: new Date(),
+      recurringDays: recurringDays && recurringDays.length > 0 ? recurringDays : undefined,
     };
 
     const { addTask: dbAddTask } = await getDb();

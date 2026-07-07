@@ -23,14 +23,17 @@ import type { Task, Priority } from "@/types";
 import { TaskCard } from "@/components/ui/TaskCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Circle, Eye, EyeOff } from "lucide-react";
+import { Circle, Eye, EyeOff, Repeat } from "lucide-react";
+
+const DAY_LABELS = ["D", "L", "M", "M", "J", "V", "S"];
+const DAY_ABBR = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
 interface TaskBoardProps {
   tasks: Task[];
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onPriorityChange: (id: string, priority: Priority) => void;
-  onAddTask: (title: string, priority: Priority) => void;
+  onAddTask: (title: string, priority: Priority, recurringDays?: number[]) => void;
   onReorder: (tasks: Task[]) => void;
 }
 
@@ -127,6 +130,103 @@ const columnConfig: Record<
   },
 };
 
+function DayPicker({
+  selected,
+  onChange,
+}: {
+  selected: number[];
+  onChange: (days: number[]) => void;
+}) {
+  const toggle = (day: number) => {
+    if (selected.includes(day)) {
+      onChange(selected.filter((d) => d !== day));
+    } else {
+      onChange([...selected, day]);
+    }
+  };
+
+  return (
+    <div className="flex gap-1">
+      {DAY_LABELS.map((label, i) => (
+        <button
+          key={i}
+          type="button"
+          onClick={() => toggle(i)}
+          aria-label={DAY_ABBR[i]}
+          className={`w-7 h-7 text-xs font-semibold rounded-full transition-colors ${
+            selected.includes(i)
+              ? "bg-accent text-white"
+              : "bg-surface-elevated text-text-secondary hover:bg-accent/20"
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function AddTaskInput({
+  priority,
+  onAdd,
+}: {
+  priority: Priority;
+  onAdd: (title: string, priority: Priority, recurringDays?: number[]) => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [showRecurring, setShowRecurring] = useState(false);
+  const [recurringDays, setRecurringDays] = useState<number[]>([]);
+
+  const handleAdd = () => {
+    if (title.trim()) {
+      onAdd(title.trim(), priority, recurringDays.length > 0 ? recurringDays : undefined);
+      setTitle("");
+      setRecurringDays([]);
+      setShowRecurring(false);
+    }
+  };
+
+  return (
+    <div className="px-4 pt-3 pb-2 animate-fade-in space-y-2">
+      <div className="flex gap-2">
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+          placeholder="Nueva tarea..."
+          aria-label="Nueva tarea"
+          autoFocus
+        />
+        <Button onClick={handleAdd} variant="ghost" size="sm" aria-label="Confirmar tarea">
+          ✓
+        </Button>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setShowRecurring(!showRecurring)}
+          className={`flex items-center gap-1 text-xs font-medium transition-colors ${
+            showRecurring || recurringDays.length > 0
+              ? "text-accent"
+              : "text-text-muted hover:text-text-secondary"
+          }`}
+        >
+          <Repeat className="w-3.5 h-3.5" aria-hidden="true" />
+          Repetir
+          {recurringDays.length > 0 && (
+            <span className="text-text-secondary">
+              ({recurringDays.map((d) => DAY_LABELS[d]).join(" ")})
+            </span>
+          )}
+        </button>
+      </div>
+      {showRecurring && (
+        <DayPicker selected={recurringDays} onChange={setRecurringDays} />
+      )}
+    </div>
+  );
+}
+
 function Column({
   title,
   priority,
@@ -140,20 +240,11 @@ function Column({
   tasks: Task[];
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
-  onAddTask: (title: string, priority: Priority) => void;
+  onAddTask: (title: string, priority: Priority, recurringDays?: number[]) => void;
 }) {
   const [showInput, setShowInput] = useState(false);
-  const [newTaskTitle, setNewTaskTitle] = useState("");
   const cfg = columnConfig[priority];
   const { setNodeRef: setDroppableNodeRef } = useDroppable({ id: priority });
-
-  const handleAdd = () => {
-    if (newTaskTitle.trim()) {
-      onAddTask(newTaskTitle.trim(), priority);
-      setNewTaskTitle("");
-      setShowInput(false);
-    }
-  };
 
   return (
     <div
@@ -181,21 +272,7 @@ function Column({
       </div>
 
       {showInput && (
-        <div className="px-4 pt-3 pb-2 animate-fade-in">
-          <div className="flex gap-2">
-            <Input
-              value={newTaskTitle}
-              onChange={(e) => setNewTaskTitle(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-              placeholder="Nueva tarea..."
-              aria-label="Nueva tarea"
-              autoFocus
-            />
-            <Button onClick={handleAdd} variant="ghost" size="sm" aria-label="Confirmar tarea">
-              ✓
-            </Button>
-          </div>
-        </div>
+        <AddTaskInput priority={priority} onAdd={onAddTask} />
       )}
 
       <div className="flex-1 p-3" ref={setDroppableNodeRef}>
