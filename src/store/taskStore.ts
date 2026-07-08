@@ -35,7 +35,7 @@ export const useTaskStore = create<TaskState>()(devLogger((set, get) => ({
   fetchTasks: async () => {
     set({ isLoading: true });
     try {
-      const { getAllTasks, getCompletionLogs, updateTask, deleteTask, formatDateKey } = await getDb();
+      const { getAllTasks, getCompletionLogs, updateTask, deleteTask, formatDateKey, addCompletionLog } = await getDb();
       const [tasks, completionLog] = await Promise.all([
         getAllTasks(),
         getCompletionLogs(),
@@ -44,6 +44,19 @@ export const useTaskStore = create<TaskState>()(devLogger((set, get) => ({
       const today = new Date();
       const todayKey = formatDateKey(today);
       const todayDay = today.getDay();
+
+      // Backfill: ensure every completed task with a completedAt has a completionLog entry
+      const existingEntries = new Set(completionLog.map(e => `${e.taskId}:${e.dateKey}`));
+      for (const task of tasks) {
+        if (!task.completed || !task.completedAt) continue;
+        const taskDayKey = formatDateKey(new Date(task.completedAt));
+        const key = `${task.id}:${taskDayKey}`;
+        if (!existingEntries.has(key)) {
+          await addCompletionLog(task.id, new Date(task.completedAt));
+          completionLog.push({ id: Date.now() + Math.random(), taskId: task.id, dateKey: taskDayKey, createdAt: new Date() });
+          existingEntries.add(key);
+        }
+      }
 
       const toDelete: string[] = [];
       const toUncheck: string[] = [];
