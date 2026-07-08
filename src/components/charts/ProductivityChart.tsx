@@ -12,6 +12,9 @@ import {
 } from 'date-fns';
 import type { CompletionLogEntry } from '@/types';
 
+const SHORT_DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const SHORT_MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
 interface ProductivityChartProps {
   completionLog: CompletionLogEntry[];
   totalTasks: number;
@@ -36,9 +39,9 @@ function generateChartData(completionLog: CompletionLogEntry[]): ChartData[] {
     ).length;
 
     data.push({
-      day: format(date, 'EEE'),
+      day: SHORT_DAYS[date.getDay()],
       count: completedCount,
-      date: format(date, 'dd MMM yyyy'),
+      date: `${String(date.getDate()).padStart(2, '0')} ${SHORT_MONTHS[date.getMonth()]} ${date.getFullYear()}`,
     });
   }
 

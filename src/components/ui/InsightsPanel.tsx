@@ -11,7 +11,7 @@ export function InsightsPanel({ insights }: InsightsPanelProps) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <h2 className="text-sm font-bold text-text-primary tracking-tight">
-            Insights
+            Recomendaciones
           </h2>
           <span className="text-xs font-semibold text-text-muted bg-surface-elevated rounded-full px-2 py-0.5">
             {insights.length}

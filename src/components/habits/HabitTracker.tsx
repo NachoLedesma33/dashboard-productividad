@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
-import { format } from 'date-fns';
 import type { Habit } from '@/types';
+
+const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Target, Flame, X } from 'lucide-react';
@@ -55,12 +56,12 @@ function AggregateHeatmap({ habits }: { habits: Habit[] }) {
   weeks.forEach((week, i) => {
     const m = week[3].getMonth();
     if (curMonth !== null && m !== curMonth) {
-      monthRanges.push({ name: format(new Date(2024, curMonth), 'MMM'), start: curStart, end: i });
+      monthRanges.push({ name: MONTHS[curMonth], start: curStart, end: i });
       curStart = i;
     }
     curMonth = m;
   });
-  if (curMonth !== null) monthRanges.push({ name: format(new Date(2024, curMonth), 'MMM'), start: curStart, end: totalWeeks });
+  if (curMonth !== null) monthRanges.push({ name: MONTHS[curMonth], start: curStart, end: totalWeeks });
 
   const colW = cell + gap;
 
@@ -139,7 +140,7 @@ function AggregateHeatmap({ habits }: { habits: Habit[] }) {
                   return (
                     <div
                       key={`${w}-${d}`}
-                      title={`${format(date, 'd MMM yyyy')}: ${c} ${c === 1 ? 'hábito' : 'hábitos'}`}
+                      title={`${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}: ${c} ${c === 1 ? 'hábito' : 'hábitos'}`}
                       className={`w-3 h-3 rounded-sm transition-colors duration-200 ${levels[level]} ${isToday ? 'ring-1 ring-white/40' : ''}`}
                     />
                   );
