@@ -99,9 +99,9 @@ function App() {
 
   useEffect(() => {
     import("@/utils/analytics/insightsEngine").then((m) => {
-      setInsights(m.generateInsights(tasks, habits));
+      setInsights(m.generateInsights(tasks, habits, completionLog));
     });
-  }, [tasks, habits]);
+  }, [tasks, habits, completionLog]);
 
   const handleAddTask = useCallback(
     async (title: string, priority: Priority, recurringDays?: number[]) => {

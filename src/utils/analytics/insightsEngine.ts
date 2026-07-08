@@ -1,5 +1,5 @@
-import { getDay, getHours, differenceInDays } from 'date-fns';
-import type { Task, Habit } from '@/types';
+import { getHours, differenceInDays } from 'date-fns';
+import type { Task, Habit, CompletionLogEntry } from '@/types';
 
 export interface Insight {
   id: string;
@@ -9,6 +9,10 @@ export interface Insight {
 }
 
 const DAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+function getDayFromDateKey(dateKey: string): number {
+  return new Date(dateKey + 'T12:00:00').getDay();
+}
 
 function getMorningProductivity(tasks: Task[]): number {
   const completed = tasks.filter((t) => {
@@ -28,12 +32,11 @@ function getEveningProductivity(tasks: Task[]): number {
   return completed.length;
 }
 
-function getBestDayOfWeek(tasks: Task[]): string | null {
+function getBestDayOfWeek(completionLog: CompletionLogEntry[]): string | null {
   const dayCounts: number[] = new Array(7).fill(0);
 
-  tasks.forEach((task) => {
-    if (!task.completed || !task.completedAt) return;
-    const dayIndex = getDay(new Date(task.completedAt));
+  completionLog.forEach((entry) => {
+    const dayIndex = getDayFromDateKey(entry.dateKey);
     dayCounts[dayIndex]++;
   });
 
@@ -91,7 +94,7 @@ function getBestHabitStreak(habits: Habit[]): { name: string; streak: number } |
   return best;
 }
 
-export function generateInsights(tasks: Task[], habits: Habit[]): Insight[] {
+export function generateInsights(tasks: Task[], habits: Habit[], completionLog: CompletionLogEntry[] = []): Insight[] {
   const insights: Insight[] = [];
   const totalCompleted = tasks.filter((t) => t.completed).length;
 
@@ -116,7 +119,7 @@ export function generateInsights(tasks: Task[], habits: Habit[]): Insight[] {
     }
   }
 
-  const bestDay = getBestDayOfWeek(tasks);
+  const bestDay = getBestDayOfWeek(completionLog);
   if (bestDay && totalCompleted >= 3) {
     insights.push({
       id: 'bestDay',
