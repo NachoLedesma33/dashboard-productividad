@@ -111,21 +111,24 @@ const emptyIconColor: Record<string, string> = {
 
 const columnConfig: Record<
   Priority,
-  { title: string; accent: string; emptyIcon: string }
+  { title: string; accent: string; clayBg: string; emptyIcon: string }
 > = {
   high: {
     title: "Alta prioridad",
     accent: "border-t-priority-high",
+    clayBg: "clay-high",
     emptyIcon: "red",
   },
   medium: {
     title: "Media prioridad",
     accent: "border-t-priority-medium",
+    clayBg: "clay-medium",
     emptyIcon: "amber",
   },
   low: {
     title: "Baja prioridad",
     accent: "border-t-priority-low",
+    clayBg: "clay-low",
     emptyIcon: "slate",
   },
 };
@@ -248,7 +251,7 @@ function Column({
 
   return (
     <div
-      className={`flex-1 min-w-0 flex flex-col rounded-2xl border border-border/50 border-t-4 ${cfg.accent} bg-surface/60 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden snap-start min-w-[85vw] md:min-w-0`}
+      className={`flex-1 min-w-0 flex flex-col surface-card border-t-4 ${cfg.accent} hover:shadow-clay-elevated transition-all duration-300 overflow-hidden snap-start min-w-[85vw] md:min-w-0`}
     >
       <div className="px-4 py-3 border-b border-border">
         <div className="flex items-center justify-between">
@@ -422,7 +425,7 @@ export function TaskBoard({
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <div className="flex md:grid md:grid-cols-3 gap-4 overflow-x-auto snap-x snap-mandatory md:overflow-visible md:snap-none scroll-smooth">
+        <div className="flex md:grid md:grid-cols-[2fr_2fr_3fr] gap-4 overflow-x-auto snap-x snap-mandatory md:overflow-visible md:snap-none scroll-smooth">
           <Column
             title={columnConfig.high.title}
             priority="high"

@@ -76,14 +76,6 @@ function AggregateHeatmap({ habits }: { habits: Habit[] }) {
 
   const maxCount = habits.length || 1;
 
-  const levels = [
-    'bg-surface-elevated',
-    'bg-success/20',
-    'bg-success/40',
-    'bg-success/65',
-    'bg-success',
-  ];
-
   const getLevel = (c: number) => {
     if (c === 0) return 0;
     const r = c / maxCount;
@@ -93,17 +85,17 @@ function AggregateHeatmap({ habits }: { habits: Habit[] }) {
   const dayLabels = ['Lun', '', 'Mié', '', 'Vie', '', ''];
 
   return (
-    <div className="p-4 rounded-xl bg-surface-elevated/20 overflow-x-auto">
+    <div className="p-4 rounded-xl surface-card overflow-x-auto">
       {/* Header: title + legend */}
       <div className="flex items-center justify-between mb-3">
         <span className="text-[10px] font-medium text-text-muted tracking-wide uppercase">Actividad últimos meses</span>
         <div className="flex items-center gap-1">
           <span className="text-[9px] text-text-muted">Menos</span>
-          <div className={`w-2.5 h-2.5 rounded-sm ${levels[0]}`} />
-          <div className={`w-2.5 h-2.5 rounded-sm ${levels[1]}`} />
-          <div className={`w-2.5 h-2.5 rounded-sm ${levels[2]}`} />
-          <div className={`w-2.5 h-2.5 rounded-sm ${levels[3]}`} />
-          <div className={`w-2.5 h-2.5 rounded-sm ${levels[4]}`} />
+          <div className="clay-dot clay-dot-0" />
+          <div className="clay-dot clay-dot-1" />
+          <div className="clay-dot clay-dot-2" />
+          <div className="clay-dot clay-dot-3" />
+          <div className="clay-dot clay-dot-4" />
           <span className="text-[9px] text-text-muted">Más</span>
         </div>
       </div>
@@ -141,7 +133,8 @@ function AggregateHeatmap({ habits }: { habits: Habit[] }) {
                     <div
                       key={`${w}-${d}`}
                       title={`${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}: ${c} ${c === 1 ? 'hábito' : 'hábitos'}`}
-                      className={`w-3 h-3 rounded-sm transition-colors duration-200 ${levels[level]} ${isToday ? 'ring-1 ring-white/40' : ''}`}
+                      className={`clay-dot clay-dot-${level} ${isToday ? 'ring-2 ring-[var(--clay-accent)]' : ''}`}
+                    style={isToday ? { outline: '2px solid var(--clay-accent)', outlineOffset: '2px' } : undefined}
                     />
                   );
                 })}
@@ -239,7 +232,11 @@ export function HabitTracker({
             return (
               <div
                 key={habit.id}
-                className="group flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-elevated/40 hover:bg-surface-elevated/80 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+                className="group flex items-center gap-3 px-4 py-3 rounded-xl hover:-translate-y-0.5 transition-all duration-200"
+                style={{
+                  background: 'var(--clay-habit-item-bg)',
+                  boxShadow: '0 1px 2px var(--clay-inset-top) inset, 0 -1px 2px var(--clay-inset-bottom) inset, var(--clay-shadow-ambient)',
+                }}
               >
                 {/* Toggle button */}
                 <button

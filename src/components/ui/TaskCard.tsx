@@ -10,24 +10,24 @@ interface TaskCardProps {
 
 const priorityConfig: Record<
   Priority,
-  { dot: string; bg: string; text: string; label: string }
+  { dot: string; clayBg: string; text: string; label: string }
 > = {
   high: {
     dot: "bg-priority-high",
-    bg: "bg-priority-high/10",
-    text: "text-priority-high",
+    clayBg: "clay-high",
+    text: "text-[#d49a8a]",
     label: "Alta",
   },
   medium: {
     dot: "bg-priority-medium",
-    bg: "bg-priority-medium/10",
-    text: "text-priority-medium",
+    clayBg: "clay-medium",
+    text: "text-[#d4b080]",
     label: "Media",
   },
   low: {
     dot: "bg-priority-low",
-    bg: "bg-priority-low/10",
-    text: "text-priority-low",
+    clayBg: "clay-low",
+    text: "text-[#8ab88a]",
     label: "Baja",
   },
 };
@@ -52,13 +52,16 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onDelete }: Tas
   );
 
   return (
-    <div className="group relative flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-elevated/40 hover:bg-surface-elevated/80 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-grab active:cursor-grabbing">
-      <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
+    <div className={`group relative flex items-center gap-3 px-4 py-3 rounded-xl ${cfg.clayBg} hover:-translate-y-0.5 transition-all duration-200 cursor-grab active:cursor-grabbing`}
+      style={{
+        boxShadow: '0 1px 2px var(--clay-inset-top) inset, 0 -1px 2px var(--clay-inset-bottom) inset, var(--clay-shadow-ambient)',
+      }}
+    >
 
       <button
         data-no-dnd
         onClick={handleToggle}
-        className={`w-5 h-5 shrink-0 rounded-md border-2 flex items-center justify-center transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+        className={`w-5 h-5 shrink-0 rounded-md border-2 flex items-center justify-center transition-all duration-200 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
           task.completed
             ? "bg-accent border-accent"
             : "border-text-muted hover:border-accent"
@@ -99,7 +102,10 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onDelete }: Tas
       <div className="relative shrink-0">
         <span
           data-no-dnd
-          className={`px-2 py-0.5 text-xs font-semibold rounded-md transition-all duration-200 ${cfg.bg} ${cfg.text}`}
+          className={`px-2 py-0.5 text-xs font-semibold rounded-md transition-all duration-200 ${cfg.clayBg} ${cfg.text}`}
+          style={{
+            boxShadow: '0 1px 1px var(--clay-inset-top) inset, 0 -1px 1px var(--clay-inset-bottom) inset',
+          }}
         >
           {cfg.label}
         </span>
@@ -108,10 +114,10 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onDelete }: Tas
       <button
         data-no-dnd
         onClick={handleDelete}
-        className="w-6 h-6 shrink-0 flex items-center justify-center text-text-muted hover:text-priority-high hover:bg-priority-high/10 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-50 hover:!opacity-100 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="w-6 h-6 shrink-0 flex items-center justify-center text-text-muted hover:text-priority-high rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-50 hover:!opacity-100 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         aria-label="Eliminar tarea"
       >
-        <X className="w-3.5 h-3.5" aria-hidden="true" />
+        <X className="w-3.5 h-3.5 icon-clay" aria-hidden="true" />
       </button>
     </div>
   );

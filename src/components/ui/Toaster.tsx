@@ -1,16 +1,9 @@
 import { useToastListener, type Toast } from "@/lib/toast";
-import { CheckCircle2, AlertCircle, Info } from "lucide-react";
 
-const iconMap: Record<Toast["type"], React.ReactNode> = {
-  success: <CheckCircle2 className="w-4 h-4 text-success" aria-hidden="true" />,
-  error: <AlertCircle className="w-4 h-4 text-error" aria-hidden="true" />,
-  info: <Info className="w-4 h-4 text-info" aria-hidden="true" />,
-};
-
-const borderMap: Record<Toast["type"], string> = {
-  success: "border-l-success",
-  error: "border-l-error",
-  info: "border-l-info",
+const emojiMap: Record<Toast["type"], string> = {
+  success: "✓",
+  error: "✗",
+  info: "·",
 };
 
 export function Toaster() {
@@ -21,10 +14,16 @@ export function Toaster() {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium shadow-2xl shadow-black/20 pointer-events-auto animate-toast-enter backdrop-blur-xl bg-surface/90 border border-border/50 border-l-4 ${borderMap[t.type]}`}
+          className="flex items-center gap-2.5 px-4 py-3 pr-6 rounded-full text-sm font-semibold pointer-events-auto animate-toast-enter"
+          style={{
+            background: 'var(--clay-toast-bg)',
+            color: 'var(--clay-text-primary)',
+            boxShadow: 'var(--clay-shadow-ambient), 0 1px 2px var(--clay-inset-top) inset, 0 -1px 2px var(--clay-inset-bottom) inset',
+            clipPath: 'polygon(4% 0%, 96% 0%, 100% 18%, 100% 82%, 96% 100%, 4% 100%, 0% 82%, 0% 18%)',
+          }}
         >
-          {iconMap[t.type]}
-          <span className="text-text-primary">{t.message}</span>
+          <span className="icon-clay text-sm">{emojiMap[t.type]}</span>
+          <span>{t.message}</span>
         </div>
       ))}
     </div>

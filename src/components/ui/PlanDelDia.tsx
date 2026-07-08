@@ -27,10 +27,10 @@ function ScoreBar({ score }: { score: number }) {
   const pct = Math.min(Math.round((score / 1.5) * 100), 100);
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 rounded-full bg-surface-elevated overflow-hidden">
+      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--clay-progress-track)' }}>
         <div
-          className="h-full rounded-full bg-accent transition-all duration-500"
-          style={{ width: `${pct}%` }}
+          className="h-full rounded-full transition-all duration-500"
+          style={{ background: 'var(--clay-progress-fill)', width: `${pct}%` }}
         />
       </div>
       <span className="text-[11px] font-medium text-text-secondary w-6 text-right">{Math.round(score * 100)}</span>
@@ -76,7 +76,7 @@ export function PlanDelDia({ open, onOpenChange, tasks, completionLog }: PlanDel
             {scored.map((s, i) => (
               <div
                 key={s.task.id}
-                className="flex flex-col gap-1.5 px-4 py-3 rounded-xl bg-surface-elevated/40 animate-fade-in"
+                className="flex flex-col gap-1.5 px-4 py-3 rounded-xl surface-card animate-fade-in"
                 style={{ animationDelay: `${i * 30}ms` }}
               >
                 <div className="flex items-center justify-between">

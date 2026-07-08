@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/Toaster";
 import { toast } from "@/lib/toast";
 import { PlanDelDia } from "@/components/ui/PlanDelDia";
-import { ClipboardList, CheckCircle2, TrendingUp, Flame, Sparkles, FileText } from "lucide-react";
+import { Sparkles, FileText, Sun, Moon } from "lucide-react";
 
 const TaskBoard = lazy(() => import("@/components/tasks/TaskBoard").then((m) => ({ default: m.TaskBoard })));
 const HabitTracker = lazy(() => import("@/components/habits/HabitTracker").then((m) => ({ default: m.HabitTracker })));
@@ -42,6 +42,20 @@ function TaskBoardSkeleton() {
 
 function App() {
   const { resetDatabase } = useDatabase();
+
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    const stored = localStorage.getItem('theme');
+    return stored === 'light' ? 'light' : 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  }, []);
   const {
     tasks,
     completionLog,
@@ -204,114 +218,83 @@ function App() {
       <div className="max-w-[1600px] mx-auto">
         {/* Header */}
         <header className="mb-10 pt-8 animate-slide-in">
-          <div className="relative overflow-hidden rounded-[20px] bg-surface/70 backdrop-blur-xl border border-accent/10 shadow-lg">
-            <div className="absolute inset-0 bg-gradient-to-br from-accent/[0.04] to-transparent pointer-events-none" />
-            <div className="relative p-7 sm:p-8">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-                <div className="space-y-2">
-                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-text-primary">
-                    Dashboard de Productividad
-                  </h1>
-                  <p className="text-base text-text-secondary capitalize">
-                    {today}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    onClick={() => setPlanOpen(true)}
-                    variant="default"
-                    size="lg"
-                    className="self-start font-semibold hover:-translate-y-0.5 transition-transform"
-                  >
-                    <Sparkles className="w-4 h-4 mr-1.5" aria-hidden="true" />
-                    Plan del día
-                  </Button>
-                  <Button
-                    onClick={handleWeeklyReport}
-                    variant="outline"
-                    size="lg"
-                    className="self-start font-semibold hover:-translate-y-0.5 transition-transform"
-                  >
-                    <FileText className="w-4 h-4 mr-1.5" aria-hidden="true" />
-                    Reporte semanal
-                  </Button>
-                  <Button
-                    onClick={handleResetDemoData}
-                    variant="ghost"
-                    size="lg"
-                    className="self-start font-semibold hover:-translate-y-0.5 transition-transform"
-                  >
-                    Cargar datos demo
-                  </Button>
-                </div>
+          <div className="surface-card p-7 sm:p-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+              <div className="space-y-2">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-engraved">
+                  Dashboard de Productividad
+                </h1>
+                <p className="text-base text-text-secondary capitalize">
+                  {today}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={() => setPlanOpen(true)}
+                  variant="default"
+                  size="lg"
+                  className="self-start font-semibold"
+                >
+                  <Sparkles className="w-4 h-4 mr-1.5 icon-clay" aria-hidden="true" />
+                  Plan del día
+                </Button>
+                <Button
+                  onClick={handleWeeklyReport}
+                  variant="outline"
+                  size="lg"
+                  className="self-start font-semibold"
+                >
+                  <FileText className="w-4 h-4 mr-1.5 icon-clay" aria-hidden="true" />
+                  Reporte semanal
+                </Button>
+                <Button
+                  onClick={handleResetDemoData}
+                  variant="ghost"
+                  size="lg"
+                  className="self-start font-semibold"
+                >
+                  Cargar datos demo
+                </Button>
               </div>
             </div>
           </div>
         </header>
 
-        {/* Metrics */}
+        {/* Metrics — piedras ovaladas */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 animate-slide-in"
           style={{ animationDelay: "0.05s" }}
         >
-          <div className="surface-card p-4 rounded-2xl">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-accent-soft flex items-center justify-center shrink-0">
-                <ClipboardList className="w-5 h-5 text-accent" aria-hidden="true" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-2xl font-bold text-text-primary font-display leading-none mb-1">
-                  {totalTasks}
-                </p>
-                <p className="text-xs text-text-secondary font-medium truncate">
-                  Tareas totales hoy
-                </p>
-              </div>
-            </div>
+          <div className="flex flex-col items-center py-6 px-4 surface-card clip-pebble">
+            <p className="text-3xl font-bold font-display text-engraved leading-none mb-1">
+              {totalTasks}
+            </p>
+            <p className="text-xs text-text-secondary font-medium text-center">
+              Tareas totales hoy
+            </p>
           </div>
-          <div className="surface-card p-4 rounded-2xl">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-5 h-5 text-success" aria-hidden="true" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-2xl font-bold text-text-primary font-display leading-none mb-1">
-                  {completedToday}
-                </p>
-                <p className="text-xs text-text-secondary font-medium truncate">
-                  Completadas hoy
-                </p>
-              </div>
-            </div>
+          <div className="flex flex-col items-center py-6 px-4 surface-card clip-pebble">
+            <p className="text-3xl font-bold font-display text-engraved leading-none mb-1">
+              {completedToday}
+            </p>
+            <p className="text-xs text-text-secondary font-medium text-center">
+              Completadas hoy
+            </p>
           </div>
-          <div className="surface-card p-4 rounded-2xl">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center shrink-0">
-                <TrendingUp className="w-5 h-5 text-warning" aria-hidden="true" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-2xl font-bold text-text-primary font-display leading-none mb-1">
-                  {rate}%
-                </p>
-                <p className="text-xs text-text-secondary font-medium truncate">
-                  Completadas
-                </p>
-              </div>
-            </div>
+          <div className="flex flex-col items-center py-6 px-4 surface-card clip-pebble">
+            <p className="text-3xl font-bold font-display text-engraved leading-none mb-1">
+              {rate}%
+            </p>
+            <p className="text-xs text-text-secondary font-medium text-center">
+              Completadas
+            </p>
           </div>
-          <div className="surface-card p-4 rounded-2xl">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-priority-medium/10 flex items-center justify-center shrink-0">
-                <Flame className="w-5 h-5 text-priority-medium" aria-hidden="true" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-2xl font-bold text-text-primary font-display leading-none mb-1">
-                  {bestStreak}
-                </p>
-                <p className="text-xs text-text-secondary font-medium truncate">
-                  Mejor racha
-                </p>
-              </div>
-            </div>
+          <div className="flex flex-col items-center py-6 px-4 surface-card clip-pebble">
+            <p className="text-3xl font-bold font-display text-engraved leading-none mb-1">
+              {bestStreak}
+            </p>
+            <p className="text-xs text-text-secondary font-medium text-center">
+              Mejor racha
+            </p>
           </div>
         </div>
 
@@ -332,7 +315,7 @@ function App() {
           >
             {/* Task Board */}
             <div className="xl:col-span-2">
-              <div className="surface-card p-5 shadow-xl">
+              <div className="surface-card p-5 clip-pebble">
                 <h2 className="sr-only">Tareas</h2>
                 <Suspense fallback={<TaskBoardSkeleton />}>
                   <TaskBoard
@@ -349,7 +332,7 @@ function App() {
 
             {/* Habits Panel */}
             <div className="xl:col-span-1">
-              <div className="surface-card p-5 shadow-xl">
+              <div className="surface-card p-5">
                 <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]"><div className="loading-spinner" /></div>}>
                   <HabitTracker
                     habits={habits}
@@ -370,14 +353,14 @@ function App() {
             style={{ animationDelay: "0.2s" }}
           >
             {/* Insights */}
-            <div className="surface-card p-5 shadow-xl">
+            <div className="surface-card p-5">
               <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]"><div className="loading-spinner" /></div>}>
                 <InsightsPanel insights={insights} habits={habits} completionLog={completionLog} />
               </Suspense>
             </div>
 
             {/* Productivity Chart */}
-            <div className="surface-card p-5 shadow-xl">
+            <div className="surface-card p-5">
               <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]"><div className="loading-spinner" /></div>}>
                 <ProductivityChart completionLog={completionLog} totalTasks={totalTasks} />
               </Suspense>
@@ -390,7 +373,7 @@ function App() {
           className="mt-16 pt-8 animate-slide-in"
           style={{ animationDelay: "0.3s" }}
         >
-          <div className="surface-card p-6 text-center">
+          <div className="surface-card p-6 text-center clip-pebble">
             <p className="text-sm text-text-muted">
               Dashboard de Productividad © 2024
             </p>
@@ -399,6 +382,21 @@ function App() {
       </div>
 
       <Toaster />
+
+      {/* Floating theme toggle */}
+      <button
+        onClick={toggleTheme}
+        className="fixed bottom-6 left-6 z-[9999] w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200"
+        aria-label={theme === 'dark' ? 'Activar tema claro' : 'Activar tema oscuro'}
+        style={{
+          background: 'var(--clay-btn-bg)',
+          color: 'var(--clay-btn-text)',
+          boxShadow: '0 1px 2px var(--clay-inset-top) inset, 0 -1px 2px var(--clay-inset-bottom) inset, var(--clay-shadow-ambient)',
+          clipPath: 'polygon(4% 0%, 96% 0%, 100% 18%, 100% 82%, 96% 100%, 4% 100%, 0% 82%, 0% 18%)',
+        }}
+      >
+        {theme === 'dark' ? <Sun className="w-4 h-4 icon-clay" aria-hidden="true" /> : <Moon className="w-4 h-4 icon-clay" aria-hidden="true" />}
+      </button>
     </div>
   );
 }
