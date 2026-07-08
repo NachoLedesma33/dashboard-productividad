@@ -6,7 +6,8 @@ import type { Insight } from "@/utils/analytics/insightsEngine";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/Toaster";
 import { toast } from "@/lib/toast";
-import { ClipboardList, CheckCircle2, TrendingUp, Flame } from "lucide-react";
+import { PlanDelDia } from "@/components/ui/PlanDelDia";
+import { ClipboardList, CheckCircle2, TrendingUp, Flame, Sparkles, FileText } from "lucide-react";
 
 const TaskBoard = lazy(() => import("@/components/tasks/TaskBoard").then((m) => ({ default: m.TaskBoard })));
 const HabitTracker = lazy(() => import("@/components/habits/HabitTracker").then((m) => ({ default: m.HabitTracker })));
@@ -61,11 +62,22 @@ function App() {
     getStreak,
   } = useHabitStore();
 
+  const [planOpen, setPlanOpen] = useState(false);
+
   useEffect(() => {
     import("@/db/database").then(({ purgeOldCompletionLogs }) => {
       purgeOldCompletionLogs(7);
     });
-    fetchTasks();
+    fetchTasks().then(() => {
+      const store = useTaskStore.getState();
+      const all = store.tasks.length;
+      const done = store.tasks.filter(t => t.completed).length;
+      import("@/utils/ai/dailyKickoff").then(({ shouldShowKickoff, getKickoffMessage }) => {
+        if (shouldShowKickoff()) {
+          toast(getKickoffMessage(all, done, 10), "info");
+        }
+      });
+    });
     fetchHabits();
   }, [fetchTasks, fetchHabits]);
 
@@ -152,6 +164,19 @@ function App() {
     window.location.reload();
   }, [resetDatabase]);
 
+  const handleWeeklyReport = useCallback(async () => {
+    const { generateReport } = await import("@/utils/ai/weeklyReport");
+    const report = generateReport(tasks, habits, completionLog);
+    const blob = new Blob([report], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `reporte-semanal-${new Date().toISOString().slice(0, 10)}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast("Reporte semanal descargado", "success");
+  }, [tasks, habits, completionLog]);
+
   const now = new Date();
   const today = `${DAY_NAMES[now.getDay()]}, ${now.getDate()} de ${MONTH_NAMES[now.getMonth()]}`;
   const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
@@ -191,14 +216,34 @@ function App() {
                     {today}
                   </p>
                 </div>
-                <Button
-                  onClick={handleResetDemoData}
-                  variant="default"
-                  size="lg"
-                  className="self-start font-semibold hover:-translate-y-0.5 transition-transform"
-                >
-                  Cargar datos demo
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    onClick={() => setPlanOpen(true)}
+                    variant="default"
+                    size="lg"
+                    className="self-start font-semibold hover:-translate-y-0.5 transition-transform"
+                  >
+                    <Sparkles className="w-4 h-4 mr-1.5" aria-hidden="true" />
+                    Plan del día
+                  </Button>
+                  <Button
+                    onClick={handleWeeklyReport}
+                    variant="outline"
+                    size="lg"
+                    className="self-start font-semibold hover:-translate-y-0.5 transition-transform"
+                  >
+                    <FileText className="w-4 h-4 mr-1.5" aria-hidden="true" />
+                    Reporte semanal
+                  </Button>
+                  <Button
+                    onClick={handleResetDemoData}
+                    variant="ghost"
+                    size="lg"
+                    className="self-start font-semibold hover:-translate-y-0.5 transition-transform"
+                  >
+                    Cargar datos demo
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -270,6 +315,14 @@ function App() {
           </div>
         </div>
 
+        {/* Plan del día dialog */}
+        <PlanDelDia
+          open={planOpen}
+          onOpenChange={setPlanOpen}
+          tasks={tasks}
+          completionLog={completionLog}
+        />
+
         {/* Main Content */}
         <main className="space-y-12">
           {/* Top Row: Tasks and Habits */}
@@ -319,7 +372,7 @@ function App() {
             {/* Insights */}
             <div className="surface-card p-5 shadow-xl">
               <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]"><div className="loading-spinner" /></div>}>
-                <InsightsPanel insights={insights} />
+                <InsightsPanel insights={insights} habits={habits} completionLog={completionLog} />
               </Suspense>
             </div>
 
