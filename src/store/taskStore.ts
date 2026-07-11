@@ -58,6 +58,19 @@ export const useTaskStore = create<TaskState>()(devLogger((set, get) => ({
         }
       }
 
+      // Sync completionLog → localStorage daily counter (survives DB resets)
+      try {
+        const fresh: Record<string, number> = {};
+        for (const entry of completionLog) {
+          fresh[entry.dateKey] = (fresh[entry.dateKey] || 0) + 1;
+        }
+        const saved = JSON.parse(localStorage.getItem('dailyCounts') || '{}');
+        for (const [key, count] of Object.entries(fresh)) {
+          saved[key] = Math.max(saved[key] || 0, count);
+        }
+        localStorage.setItem('dailyCounts', JSON.stringify(saved));
+      } catch { /* localStorage unavailable */ }
+
       const toDelete: string[] = [];
       const toUncheck: string[] = [];
 
@@ -125,6 +138,12 @@ export const useTaskStore = create<TaskState>()(devLogger((set, get) => ({
     if (updatedCompleted) {
       await addCompletionLog(id);
       const dateKey = formatDateKey(new Date());
+      // Track daily count in localStorage (survives DB resets)
+      try {
+        const counts = JSON.parse(localStorage.getItem('dailyCounts') || '{}');
+        counts[dateKey] = (counts[dateKey] || 0) + 1;
+        localStorage.setItem('dailyCounts', JSON.stringify(counts));
+      } catch { /* localStorage unavailable */ }
       set((state) => ({
         tasks: state.tasks.map((t) =>
           t.id === id ? { ...t, completed: updatedCompleted, completedAt: updatedCompletedAt } : t

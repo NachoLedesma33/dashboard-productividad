@@ -32,14 +32,29 @@ function getEveningProductivity(tasks: Task[]): number {
   return completed.length;
 }
 
-function getBestDayOfWeek(completionLog: CompletionLogEntry[]): string | null {
+function getDayCounts(completionLog: CompletionLogEntry[]): number[] {
   const dayCounts: number[] = new Array(7).fill(0);
 
+  // Source 1: completionLog (IndexedDB, survives task deletion)
   completionLog.forEach((entry) => {
     const dayIndex = getDayFromDateKey(entry.dateKey);
     dayCounts[dayIndex]++;
   });
 
+  // Source 2: localStorage daily counter (survives DB resets)
+  try {
+    const localCounts = JSON.parse(localStorage.getItem('dailyCounts') || '{}');
+    Object.entries(localCounts).forEach(([dateKey, count]) => {
+      const dayIndex = getDayFromDateKey(dateKey);
+      dayCounts[dayIndex] += count as number;
+    });
+  } catch { /* ignore */ }
+
+  return dayCounts;
+}
+
+function getBestDayOfWeek(completionLog: CompletionLogEntry[]): string | null {
+  const dayCounts = getDayCounts(completionLog);
   const maxCount = Math.max(...dayCounts);
   if (maxCount === 0) return null;
 
