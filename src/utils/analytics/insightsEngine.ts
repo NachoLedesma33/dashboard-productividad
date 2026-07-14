@@ -32,28 +32,29 @@ function getEveningProductivity(tasks: Task[]): number {
   return completed.length;
 }
 
-function getDayCounts(completionLog: CompletionLogEntry[]): number[] {
-  const dayCounts: number[] = new Array(7).fill(0);
-
+export function getDayCounts(completionLog: CompletionLogEntry[]): number[] {
   // Source 1: completionLog (IndexedDB, survives task deletion)
+  const fromLog: number[] = new Array(7).fill(0);
   completionLog.forEach((entry) => {
     const dayIndex = getDayFromDateKey(entry.dateKey);
-    dayCounts[dayIndex]++;
+    fromLog[dayIndex]++;
   });
 
   // Source 2: localStorage daily counter (survives DB resets)
+  const fromLocal: number[] = new Array(7).fill(0);
   try {
     const localCounts = JSON.parse(localStorage.getItem('dailyCounts') || '{}');
     Object.entries(localCounts).forEach(([dateKey, count]) => {
       const dayIndex = getDayFromDateKey(dateKey);
-      dayCounts[dayIndex] += count as number;
+      fromLocal[dayIndex] += count as number;
     });
   } catch { /* ignore */ }
 
-  return dayCounts;
+  // Use MAX of both sources: if DB is alive, completionLog wins; if DB was reset, localStorage covers
+  return fromLog.map((log, i) => Math.max(log, fromLocal[i]));
 }
 
-function getBestDayOfWeek(completionLog: CompletionLogEntry[]): string | null {
+export function getBestDayOfWeek(completionLog: CompletionLogEntry[]): string | null {
   const dayCounts = getDayCounts(completionLog);
   const maxCount = Math.max(...dayCounts);
   if (maxCount === 0) return null;
