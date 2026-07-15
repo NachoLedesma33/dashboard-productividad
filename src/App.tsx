@@ -180,7 +180,7 @@ function App() {
 
   const handleWeeklyReport = useCallback(async () => {
     const { generateReport } = await import("@/utils/ai/weeklyReport");
-    const report = generateReport(tasks, habits, completionLog);
+    const report = generateReport(habits, completionLog);
     const blob = new Blob([report], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -189,7 +189,7 @@ function App() {
     a.click();
     URL.revokeObjectURL(url);
     toast("Reporte semanal descargado", "success");
-  }, [tasks, habits, completionLog]);
+  }, [habits, completionLog]);
 
   const now = new Date();
   const today = `${DAY_NAMES[now.getDay()]}, ${now.getDate()} de ${MONTH_NAMES[now.getMonth()]}`;
