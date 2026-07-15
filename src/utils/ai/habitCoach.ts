@@ -73,7 +73,7 @@ export function analyzeHabits(habits: Habit[]): HabitFeedback[] {
     } else if (streak >= 3) {
       feedback.messages.push({ type: 'encourage', text: `Bien! Llevás ${streak} días seguidos.` });
     } else if (streak === 0 && uniqueDays.length > 0) {
-      feedback.messages.push({ type: 'encourage', text: `Retomá el hábito! Ya lo hiciste antes.` });
+      feedback.messages.push({ type: 'encourage', text: `"${h.name}": retomá el hábito! Ya lo hiciste antes.` });
     }
 
     const today = getTodayStart();
@@ -88,7 +88,7 @@ export function analyzeHabits(habits: Habit[]): HabitFeedback[] {
     if (weeklyRate < 0.3 && streak === 0) {
       feedback.messages.push({
         type: 'tip',
-        text: `Esta semana solo ${Math.round(weeklyRate * 100)}%. Probá reducir la duración.`,
+        text: `"${h.name}": esta semana solo ${Math.round(weeklyRate * 100)}%. Probá reducir la duración.`,
       });
     }
 
