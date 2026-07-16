@@ -65,14 +65,18 @@ export const useTaskStore = create<TaskState>()(devLogger((set, get) => ({
           fresh[entry.dateKey] = (fresh[entry.dateKey] || 0) + 1;
         }
         const saved = JSON.parse(localStorage.getItem('dailyCounts') || '{}');
-        if (completionLog.length > 0) {
-          for (const key of Object.keys(saved)) {
-            if (key in fresh) {
-              saved[key] = fresh[key];
-            } else {
-              delete saved[key];
-            }
+        // Remove entries older than 7 days to prevent stale inflation
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const cutoff = formatDateKey(sevenDaysAgo);
+        for (const key of Object.keys(saved)) {
+          if (key < cutoff) {
+            delete saved[key];
           }
+        }
+        // Overwrite matching keys with completionLog data
+        for (const [key, count] of Object.entries(fresh)) {
+          saved[key] = count;
         }
         localStorage.setItem('dailyCounts', JSON.stringify(saved));
       } catch { /* localStorage unavailable */ }

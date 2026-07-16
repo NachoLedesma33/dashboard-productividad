@@ -33,23 +33,25 @@ function getEveningProductivity(tasks: Task[]): number {
 }
 
 function getDayCounts(completionLog: CompletionLogEntry[]): number[] {
-  const dayCounts: number[] = new Array(7).fill(0);
-
+  const logCounts: number[] = new Array(7).fill(0);
   for (const entry of completionLog) {
     const dayIndex = getDayFromDateKey(entry.dateKey);
-    dayCounts[dayIndex]++;
+    logCounts[dayIndex]++;
   }
 
-  if (completionLog.length === 0) {
-    try {
-      const localCounts = JSON.parse(localStorage.getItem('dailyCounts') || '{}');
-      Object.entries(localCounts).forEach(([dateKey, count]) => {
-        const dayIndex = getDayFromDateKey(dateKey);
-        dayCounts[dayIndex] += count as number;
-      });
-    } catch { /* ignore */ }
-  }
+  const localCounts: number[] = new Array(7).fill(0);
+  try {
+    const saved = JSON.parse(localStorage.getItem('dailyCounts') || '{}');
+    Object.entries(saved).forEach(([dateKey, count]) => {
+      const dayIndex = getDayFromDateKey(dateKey);
+      localCounts[dayIndex] += count as number;
+    });
+  } catch { /* ignore */ }
 
+  const dayCounts: number[] = new Array(7).fill(0);
+  for (let i = 0; i < 7; i++) {
+    dayCounts[i] = Math.max(logCounts[i], localCounts[i]);
+  }
   return dayCounts;
 }
 

@@ -18,25 +18,28 @@ function getWeekDayScores(logs: CompletionLogEntry[]): number[] {
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   const startKey = `${sevenDaysAgo.getFullYear()}-${String(sevenDaysAgo.getMonth() + 1).padStart(2, '0')}-${String(sevenDaysAgo.getDate()).padStart(2, '0')}`;
 
+  const logScores = [0, 0, 0, 0, 0, 0, 0];
   const weekLogs = logs.filter(l => l.dateKey >= startKey);
-  const dayScores = [0, 0, 0, 0, 0, 0, 0];
   for (const log of weekLogs) {
     const day = getDayFromDateKey(log.dateKey);
-    dayScores[day]++;
+    logScores[day]++;
   }
 
-  if (weekLogs.length === 0) {
-    try {
-      const localCounts = JSON.parse(localStorage.getItem('dailyCounts') || '{}');
-      Object.entries(localCounts).forEach(([dateKey, count]) => {
-        if (dateKey >= startKey) {
-          const day = getDayFromDateKey(dateKey);
-          dayScores[day] += count as number;
-        }
-      });
-    } catch { /* ignore */ }
-  }
+  const localScores = [0, 0, 0, 0, 0, 0, 0];
+  try {
+    const localCounts = JSON.parse(localStorage.getItem('dailyCounts') || '{}');
+    Object.entries(localCounts).forEach(([dateKey, count]) => {
+      if (dateKey >= startKey) {
+        const day = getDayFromDateKey(dateKey);
+        localScores[day] += count as number;
+      }
+    });
+  } catch { /* ignore */ }
 
+  const dayScores = [0, 0, 0, 0, 0, 0, 0];
+  for (let i = 0; i < 7; i++) {
+    dayScores[i] = Math.max(logScores[i], localScores[i]);
+  }
   return dayScores;
 }
 
