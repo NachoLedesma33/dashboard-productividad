@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import {
   DndContext,
@@ -172,33 +172,60 @@ function DayPicker({
 function AddTaskInput({
   priority,
   onAdd,
+  onClose,
 }: {
   priority: Priority;
   onAdd: (title: string, priority: Priority, recurringDays?: number[]) => void;
+  onClose: () => void;
 }) {
   const [title, setTitle] = useState("");
   const [showRecurring, setShowRecurring] = useState(false);
   const [recurringDays, setRecurringDays] = useState<number[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
-  const handleAdd = () => {
+const handleAdd = () => {
     if (title.trim()) {
       onAdd(title.trim(), priority, recurringDays.length > 0 ? recurringDays : undefined);
       setTitle("");
       setRecurringDays([]);
       setShowRecurring(false);
+      onClose();
     }
   };
 
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
+
   return (
-    <div className="px-4 pt-3 pb-2 animate-fade-in space-y-2">
+    <div ref={wrapperRef} className="px-4 pt-3 pb-2 animate-fade-in space-y-2">
       <div className="flex gap-2">
         <Input
+          ref={inputRef}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleAdd()}
           placeholder="Nueva tarea..."
           aria-label="Nueva tarea"
-          autoFocus
         />
         <Button onClick={handleAdd} variant="ghost" size="sm" aria-label="Confirmar tarea">
           ✓
@@ -275,7 +302,7 @@ function Column({
       </div>
 
       {showInput && (
-        <AddTaskInput priority={priority} onAdd={onAddTask} />
+        <AddTaskInput priority={priority} onAdd={onAddTask} onClose={() => setShowInput(false)} />
       )}
 
       <div className="flex-1 p-3" ref={setDroppableNodeRef}>
