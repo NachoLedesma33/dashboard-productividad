@@ -14,8 +14,8 @@ export default defineConfig({
       injectRegister: 'inline',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'Dashboard de Productividad',
-        short_name: 'D. Productividad',
+        name: 'En Ritmo',
+        short_name: 'En Ritmo',
         description: 'Panel personal de productividad con gestión de tareas, hábitos y análisis de rendimiento.',
         start_url: '/',
         display: 'standalone',

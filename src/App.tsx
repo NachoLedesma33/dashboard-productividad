@@ -221,9 +221,15 @@ function App() {
           <div className="surface-card p-7 sm:p-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
               <div className="space-y-2">
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-engraved">
-                  Dashboard de Productividad
-                </h1>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl sm:text-3xl lg:text-4xl font-bold font-display text-engraved tracking-tight">
+                    En Ritmo
+                  </span>
+                  <span className="hidden sm:inline-block w-px h-6 bg-border/50" aria-hidden="true"></span>
+                  <span className="text-sm font-medium text-text-secondary uppercase tracking-wide opacity-70">
+                    Dashboard de Productividad
+                  </span>
+                </div>
                 <p className="text-base text-text-secondary capitalize">
                   {today}
                 </p>
@@ -375,7 +381,7 @@ function App() {
         >
           <div className="surface-card p-6 text-center clip-pebble">
             <p className="text-sm text-text-muted">
-              Dashboard de Productividad © 2024
+              En Ritmo © {new Date().getFullYear()}
             </p>
           </div>
         </footer>
