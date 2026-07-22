@@ -51,6 +51,8 @@ function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', theme === 'dark' ? '#0d0a08' : '#f5f0e8');
   }, [theme]);
 
   const toggleTheme = useCallback(() => {
