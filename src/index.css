@@ -218,11 +218,8 @@ p { color: var(--clay-text-secondary); }
     var(--clay-shadow-ambient),
     0 1px 2px var(--clay-inset-top) inset,
     0 -1px 2px var(--clay-inset-bottom) inset;
+  border-radius: 1.25rem;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  clip-path: polygon(
-    0% 3%, 1.5% 0%, 98.5% 0%, 100% 3%,
-    100% 97%, 98.5% 100%, 1.5% 100%, 0% 97%
-  );
 }
 
 .surface-card:hover {
@@ -237,7 +234,7 @@ p { color: var(--clay-text-secondary); }
 .btn-clay {
   background: var(--clay-btn-bg);
   color: var(--clay-btn-text);
-  clip-path: polygon(4% 0%, 96% 0%, 100% 18%, 100% 82%, 96% 100%, 4% 100%, 0% 82%, 0% 18%);
+  border-radius: 1rem;
   box-shadow:
     0 1px 2px var(--clay-inset-top) inset,
     0 -1px 2px var(--clay-inset-bottom) inset,
@@ -355,4 +352,4 @@ p { color: var(--clay-text-secondary); }
 .clay-dot-4 { background: var(--clay-heat-4); box-shadow: 0 2px 4px rgba(0,0,0,0.4), 0 1px 2px var(--clay-inset-top) inset; }
 
 /* ── Clip variants ── */
-.clip-pebble { clip-path: polygon(4% 0%, 96% 0%, 100% 8%, 100% 92%, 96% 100%, 4% 100%, 0% 92%, 0% 8%); }
+.clip-pebble { border-radius: 1.5rem; }
