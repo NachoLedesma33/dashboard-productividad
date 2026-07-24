@@ -318,11 +318,11 @@ function App() {
         <main className="space-y-12">
           {/* Top Row: Tasks and Habits */}
           <div
-            className="grid grid-cols-1 xl:grid-cols-3 gap-8 animate-slide-in"
+            className="grid grid-cols-1 xl:grid-cols-[10fr_1fr] gap-8 animate-slide-in"
             style={{ animationDelay: "0.1s" }}
           >
             {/* Task Board */}
-            <div className="xl:col-span-2">
+            <div>
               <div className="surface-card p-5 clip-pebble">
                 <h2 className="sr-only">Tareas</h2>
                 <Suspense fallback={<TaskBoardSkeleton />}>
@@ -339,7 +339,7 @@ function App() {
             </div>
 
             {/* Habits Panel */}
-            <div className="xl:col-span-1">
+            <div>
               <div className="surface-card p-5">
                 <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]"><div className="loading-spinner" /></div>}>
                   <HabitTracker

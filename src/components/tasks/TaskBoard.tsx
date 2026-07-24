@@ -452,7 +452,7 @@ export function TaskBoard({
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <div className="flex md:grid md:grid-cols-[2fr_2fr_3fr] gap-4 overflow-x-auto snap-x snap-mandatory md:overflow-visible md:snap-none scroll-smooth">
+        <div className="flex md:grid md:grid-cols-[2fr_2fr_2fr] gap-4 overflow-x-auto snap-x snap-mandatory md:overflow-visible md:snap-none scroll-smooth">
           <Column
             title={columnConfig.high.title}
             priority="high"
