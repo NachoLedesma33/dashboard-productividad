@@ -4,7 +4,7 @@ import type { Habit } from '@/types';
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Target, Flame, X } from 'lucide-react';
+import { Pencil, Target, Flame, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,7 @@ interface HabitTrackerProps {
   onToggle: (id: string) => void;
   onDeleteHabit: (id: string) => void;
   onAddHabit: (name: string) => void;
+  onEditHabit: (id: string, name: string) => void;
 }
 
 function AggregateHeatmap({ habits }: { habits: Habit[] }) {
@@ -179,6 +180,43 @@ function AddHabitForm({ onAdd }: { onAdd: (name: string) => void }) {
   );
 }
 
+function EditHabitForm({
+  habit,
+  onSave,
+}: {
+  habit: Habit;
+  onSave: (id: string, name: string) => void;
+}) {
+  const [name, setName] = useState(habit.name);
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (name.trim()) {
+      onSave(habit.id, name.trim());
+      closeRef.current?.click();
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <Input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Nombre del hábito..."
+        aria-label="Nombre del hábito"
+        autoFocus
+      />
+      <div className="flex gap-2 justify-end">
+        <DialogClose asChild ref={closeRef}>
+          <Button variant="outline">Cancelar</Button>
+        </DialogClose>
+        <Button type="submit" variant="ghost">Guardar</Button>
+      </div>
+    </form>
+  );
+}
+
 export function HabitTracker({
   habits,
   getTodayStatus,
@@ -186,6 +224,7 @@ export function HabitTracker({
   onToggle,
   onDeleteHabit,
   onAddHabit,
+  onEditHabit,
 }: HabitTrackerProps) {
 
   return (
@@ -270,6 +309,23 @@ export function HabitTracker({
                     </p>
                   )}
                 </div>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button
+                      className="w-6 h-6 shrink-0 flex items-center justify-center text-text-muted hover:text-accent rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-50 hover:!opacity-100 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      aria-label="Editar hábito"
+                    >
+                      <Pencil className="w-3 h-3" aria-hidden="true" />
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-sm">
+                    <DialogHeader>
+                      <DialogTitle>Editar hábito</DialogTitle>
+                    </DialogHeader>
+                    <EditHabitForm habit={habit} onSave={onEditHabit} />
+                  </DialogContent>
+                </Dialog>
 
                 {/* Delete button */}
                 <button

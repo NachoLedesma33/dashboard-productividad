@@ -1,11 +1,12 @@
 import { memo, useCallback } from "react";
 import type { Task, Priority } from "@/types";
-import { X } from "lucide-react";
+import { Pencil, X } from "lucide-react";
 
 interface TaskCardProps {
   task: Task;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
+  onEdit?: (id: string) => void;
 }
 
 const priorityConfig: Record<
@@ -32,7 +33,7 @@ const priorityConfig: Record<
   },
 };
 
-export const TaskCard = memo(function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
+export const TaskCard = memo(function TaskCard({ task, onToggle, onDelete, onEdit }: TaskCardProps) {
   const cfg = priorityConfig[task.priority];
 
   const handleToggle = useCallback(
@@ -41,6 +42,14 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onDelete }: Tas
       onToggle(task.id);
     },
     [task.id, onToggle],
+  );
+
+  const handleEdit = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onEdit?.(task.id);
+    },
+    [task.id, onEdit],
   );
 
   const handleDelete = useCallback(
@@ -110,6 +119,15 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onDelete }: Tas
           {cfg.label}
         </span>
       </div>
+
+      <button
+        data-no-dnd
+        onClick={handleEdit}
+        className="w-6 h-6 shrink-0 flex items-center justify-center text-text-muted hover:text-accent rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-50 hover:!opacity-100 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        aria-label="Editar tarea"
+      >
+        <Pencil className="w-3.5 h-3.5 icon-clay" aria-hidden="true" />
+      </button>
 
       <button
         data-no-dnd

@@ -75,6 +75,10 @@ export async function deleteHabit(id: string): Promise<void> {
   await db.habits.delete(id);
 }
 
+export async function updateHabit(id: string, name: string): Promise<number> {
+  return db.habits.update(id, { name });
+}
+
 export async function getAllHabits(): Promise<Habit[]> {
   return db.habits.toArray();
 }

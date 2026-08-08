@@ -77,6 +77,7 @@ interface HabitState {
   isLoading: boolean;
   fetchHabits: () => Promise<void>;
   addHabit: (name: string) => Promise<void>;
+  updateHabit: (habitId: string, name: string) => Promise<void>;
   toggleHabit: (habitId: string) => Promise<void>;
   deleteHabit: (habitId: string) => Promise<void>;
   getTodayStatus: (habitId: string) => boolean;
@@ -123,6 +124,14 @@ export const useHabitStore = create<HabitState>()(devLogger((set, get) => ({
     const { addHabit: dbAddHabit } = await getDb();
     await dbAddHabit(newHabit);
     set((state) => ({ habits: [...state.habits, newHabit] }));
+  },
+
+  updateHabit: async (habitId, name) => {
+    const { updateHabit: dbUpdateHabit } = await getDb();
+    await dbUpdateHabit(habitId, name);
+    set((state) => ({
+      habits: state.habits.map((h) => (h.id === habitId ? { ...h, name } : h)),
+    }));
   },
 
   toggleHabit: async (habitId) => {

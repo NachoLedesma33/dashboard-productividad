@@ -23,6 +23,14 @@ import type { Task, Priority } from "@/types";
 import { TaskCard } from "@/components/ui/TaskCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { Circle, Eye, EyeOff, Repeat } from "lucide-react";
 
 const DAY_LABELS = ["D", "L", "M", "M", "J", "V", "S"];
@@ -32,6 +40,7 @@ interface TaskBoardProps {
   tasks: Task[];
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
+  onEditTask: (id: string, title: string, priority: Priority, recurringDays?: number[]) => void;
   onPriorityChange: (id: string, priority: Priority) => void;
   onAddTask: (title: string, priority: Priority, recurringDays?: number[]) => void;
   onReorder: (tasks: Task[]) => void;
@@ -41,10 +50,12 @@ function SortableTaskCard({
   task,
   onToggle,
   onDelete,
+  onEdit,
 }: {
   task: Task;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
+  onEdit: (id: string) => void;
 }) {
   const {
     attributes,
@@ -98,7 +109,7 @@ function SortableTaskCard({
 
   return (
     <div ref={setNodeRef} style={style} data-sortable {...attributes} {...filteredListeners}>
-      <TaskCard task={task} onToggle={onToggle} onDelete={onDelete} />
+      <TaskCard task={task} onToggle={onToggle} onDelete={onDelete} onEdit={onEdit} />
     </div>
   );
 }
@@ -257,12 +268,104 @@ const handleAdd = () => {
   );
 }
 
+const priorityOptions: { value: Priority; label: string; color: string }[] = [
+  { value: "high", label: "Alta", color: "bg-priority-high" },
+  { value: "medium", label: "Media", color: "bg-priority-medium" },
+  { value: "low", label: "Baja", color: "bg-priority-low" },
+];
+
+function EditTaskDialog({
+  task,
+  onSave,
+  onClose,
+}: {
+  task: Task;
+  onSave: (title: string, priority: Priority, recurringDays?: number[]) => void;
+  onClose: () => void;
+}) {
+  const [title, setTitle] = useState(task.title);
+  const [priority, setPriority] = useState<Priority>(task.priority);
+  const [recurringDays, setRecurringDays] = useState<number[]>(task.recurringDays ?? []);
+
+  const handleSave = () => {
+    if (title.trim()) {
+      onSave(title.trim(), priority, recurringDays.length > 0 ? recurringDays : undefined);
+      onClose();
+    }
+  };
+
+  return (
+    <DialogContent className="sm:max-w-sm">
+      <DialogHeader>
+        <DialogTitle>Editar tarea</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-text-secondary">Título</label>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSave()}
+            placeholder="Título de la tarea..."
+            aria-label="Título de la tarea"
+            autoFocus
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-text-secondary">Prioridad</label>
+          <div className="flex gap-2">
+            {priorityOptions.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setPriority(opt.value)}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                  priority === opt.value
+                    ? "bg-accent text-white"
+                    : "bg-surface-elevated text-text-secondary hover:bg-accent/20"
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full ${opt.color}`} aria-hidden="true" />
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => setRecurringDays([])}
+            className="flex items-center gap-1.5 text-xs font-medium transition-colors text-text-secondary hover:text-text-primary"
+          >
+            <Repeat className="w-3.5 h-3.5" aria-hidden="true" />
+            Repetir
+            {recurringDays.length > 0 && (
+              <span className="text-text-secondary">
+                ({recurringDays.map((d) => DAY_LABELS[d]).join(" ")})
+              </span>
+            )}
+            {recurringDays.length > 0 && <span className="text-text-muted">· tocar para limpiar</span>}
+          </button>
+          <DayPicker selected={recurringDays} onChange={setRecurringDays} />
+        </div>
+      </div>
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button variant="outline">Cancelar</Button>
+        </DialogClose>
+        <Button onClick={handleSave} variant="ghost">Guardar</Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
 function Column({
   title,
   priority,
   tasks,
   onToggle,
   onDelete,
+  onEditTask,
   onAddTask,
 }: {
   title: string;
@@ -270,6 +373,7 @@ function Column({
   tasks: Task[];
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
+  onEditTask: (id: string) => void;
   onAddTask: (title: string, priority: Priority, recurringDays?: number[]) => void;
 }) {
   const [showInput, setShowInput] = useState(false);
@@ -317,6 +421,7 @@ function Column({
                 task={task}
                 onToggle={onToggle}
                 onDelete={onDelete}
+                onEdit={onEditTask}
               />
             ))}
             {tasks.length === 0 && (
@@ -336,12 +441,14 @@ export function TaskBoard({
   tasks,
   onToggle,
   onDelete,
+  onEditTask,
   onPriorityChange,
   onAddTask,
   onReorder,
 }: TaskBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [hideCompleted, setHideCompleted] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const offsetRef = useRef({ x: 0, y: 0 });
   const initialPointerRef = useRef({ x: 0, y: 0 });
@@ -459,6 +566,7 @@ export function TaskBoard({
             tasks={highTasks}
             onToggle={onToggle}
             onDelete={onDelete}
+            onEditTask={setEditingTaskId}
             onAddTask={onAddTask}
           />
           <Column
@@ -467,6 +575,7 @@ export function TaskBoard({
             tasks={mediumTasks}
             onToggle={onToggle}
             onDelete={onDelete}
+            onEditTask={setEditingTaskId}
             onAddTask={onAddTask}
           />
           <Column
@@ -475,10 +584,27 @@ export function TaskBoard({
             tasks={lowTasks}
             onToggle={onToggle}
             onDelete={onDelete}
+            onEditTask={setEditingTaskId}
             onAddTask={onAddTask}
           />
         </div>
       </DndContext>
+
+      {editingTaskId && (() => {
+        const editingTask = tasks.find((t) => t.id === editingTaskId);
+        if (!editingTask) return null;
+        return (
+          <Dialog open onOpenChange={(open) => !open && setEditingTaskId(null)}>
+            <EditTaskDialog
+              task={editingTask}
+              onSave={(title, priority, recurringDays) =>
+                onEditTask(editingTask.id, title, priority, recurringDays)
+              }
+              onClose={() => setEditingTaskId(null)}
+            />
+          </Dialog>
+        );
+      })()}
 
       {activeTask &&
         createPortal(

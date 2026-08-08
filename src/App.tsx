@@ -64,6 +64,7 @@ function App() {
     fetchTasks,
     addTask,
     toggleTask,
+    updateTask,
     updatePriority,
     deleteTask,
     reorderTasks,
@@ -72,6 +73,7 @@ function App() {
     habits,
     fetchHabits,
     addHabit,
+    updateHabit,
     toggleHabit,
     deleteHabit,
     getTodayStatus,
@@ -121,6 +123,14 @@ function App() {
     [deleteTask],
   );
 
+  const handleEditTask = useCallback(
+    async (id: string, title: string, priority: Priority, recurringDays?: number[]) => {
+      await updateTask(id, { title, priority, recurringDays });
+      toast("Tarea actualizada", "success");
+    },
+    [updateTask],
+  );
+
   const handlePriorityChange = useCallback(
     async (id: string, priority: Priority) => {
       const task = tasks.find((t) => t.id === id);
@@ -154,6 +164,14 @@ function App() {
       toast("Hábito agregado", "success");
     },
     [addHabit],
+  );
+
+  const handleEditHabit = useCallback(
+    async (id: string, name: string) => {
+      await updateHabit(id, name);
+      toast("Hábito actualizado", "success");
+    },
+    [updateHabit],
   );
 
   const handleDeleteHabit = useCallback(
@@ -330,6 +348,7 @@ function App() {
                     tasks={tasks}
                     onToggle={handleToggleTask}
                     onDelete={handleDeleteTask}
+                    onEditTask={handleEditTask}
                     onPriorityChange={handlePriorityChange}
                     onAddTask={handleAddTask}
                     onReorder={handleReorder}
@@ -349,6 +368,7 @@ function App() {
                     onToggle={handleToggleHabit}
                     onDeleteHabit={handleDeleteHabit}
                     onAddHabit={handleAddHabit}
+                    onEditHabit={handleEditHabit}
                   />
                 </Suspense>
               </div>

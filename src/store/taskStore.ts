@@ -9,6 +9,10 @@ interface TaskState {
   fetchTasks: () => Promise<void>;
   addTask: (title: string, priority: Task['priority'], recurringDays?: number[]) => Promise<void>;
   toggleTask: (id: string) => Promise<void>;
+  updateTask: (
+    id: string,
+    changes: Partial<Pick<Task, 'title' | 'priority' | 'recurringDays'>>
+  ) => Promise<void>;
   updatePriority: (id: string, priority: Task['priority']) => Promise<void>;
   reorderTasks: (tasks: Task[]) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
@@ -180,6 +184,15 @@ export const useTaskStore = create<TaskState>()(devLogger((set, get) => ({
         ),
       }));
     }
+  },
+
+  updateTask: async (id, changes) => {
+    const { updateTask: dbUpdateTask } = await getDb();
+    await dbUpdateTask(id, changes);
+
+    set((state) => ({
+      tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...changes } : t)),
+    }));
   },
 
   updatePriority: async (id, priority) => {
