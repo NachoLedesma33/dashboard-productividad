@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useCalendarStore } from '@/store/calendarStore';
 import type { CalendarEvent, CalendarEventCategory } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -43,26 +43,67 @@ function DayCell({ day, year, month, events, onClick }: { day: number; year: num
   );
 }
 
-function AddEventForm({ dateKey }: { dateKey: string }) {
+function DayDialog({ dateKey, onClose }: { dateKey: string; onClose: () => void }) {
   const [title, setTitle] = useState(''), [cat, setCat] = useState<CalendarEventCategory>('personal');
-  const ref = useRef<HTMLButtonElement>(null);
-  const add = useCalendarStore(s => s.addEvent);
+  const [editing, setEditing] = useState<string | null>(null), [editTitle, setEditTitle] = useState(''), [editCat, setEditCat] = useState<CalendarEventCategory>('personal');
+  const { events, addEvent, deleteEvent, updateEvent } = useCalendarStore();
   const [d, m, y] = dateKey.split('-');
-  const handle = (e: React.FormEvent) => { e.preventDefault(); if (title.trim()) { add(title.trim(), dateKey, cat); ref.current?.click(); } };
+  const dayEvents = useMemo(() => events.filter(e => e.dateKey === dateKey), [events, dateKey]);
+
+  const handleAdd = (e: React.FormEvent) => { e.preventDefault(); if (title.trim()) { addEvent(title.trim(), dateKey, cat); setTitle(''); setCat('personal'); } };
+  const handleDelete = (id: string) => { deleteEvent(id); };
+  const startEdit = (ev: CalendarEvent) => { setEditing(ev.id); setEditTitle(ev.title); setEditCat(ev.category); };
+  const saveEdit = () => { if (editing && editTitle.trim()) { updateEvent(editing, { title: editTitle.trim(), category: editCat }); setEditing(null); } };
+  const cancelEdit = () => { setEditing(null); };
+
   return (
-    <form onSubmit={handle} className="space-y-2">
+    <div className="space-y-3">
       <p className="text-xs text-text-secondary text-center font-medium">{parseInt(d)} de {MONTH_NAMES[parseInt(m) - 1]} {y}</p>
-      <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Evento" autoFocus className="h-7 text-xs" />
-      <div className="flex flex-wrap gap-1">
-        {CATS.map(c => (
-          <button key={c} type="button" onClick={() => setCat(c)} className={`px-2 py-1 text-[11px] rounded border ${cat === c ? 'bg-accent text-white border-transparent' : 'border-border text-text-secondary'}`}>{C[c].name}</button>
-        ))}
-      </div>
-      <div className="flex gap-2 justify-end">
-        <DialogClose asChild ref={ref}><Button variant="outline" type="button" className="h-6 text-[10px]">Cancelar</Button></DialogClose>
-        <Button type="submit" variant="ghost" className="h-6 text-[10px]">Agregar</Button>
-      </div>
-    </form>
+
+      {dayEvents.length > 0 && (
+        <div className="space-y-1.5 max-h-40 overflow-y-auto">
+          {dayEvents.map(ev => (
+            <div key={ev.id} className="flex items-center gap-2 p-1.5 rounded bg-surface-elevated">
+              <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: C[ev.category].c }} />
+              {editing === ev.id ? (
+                <div className="flex-1 flex flex-col gap-1">
+                  <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} className="h-6 text-[11px]" autoFocus />
+                  <div className="flex gap-1 flex-wrap">
+                    {CATS.map(c => (
+                      <button key={c} type="button" onClick={() => setEditCat(c)} className={`px-1.5 py-0.5 text-[9px] rounded border ${editCat === c ? 'bg-accent text-white border-transparent' : 'border-border text-text-secondary'}`}>{C[c].name}</button>
+                    ))}
+                  </div>
+                  <div className="flex gap-1 justify-end">
+                    <Button variant="outline" onClick={cancelEdit} className="h-5 text-[9px]">Cancelar</Button>
+                    <Button variant="ghost" onClick={saveEdit} className="h-5 text-[9px]">Guardar</Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <span className="flex-1 text-[11px] text-text-primary truncate">{ev.title}</span>
+                  <button onClick={() => startEdit(ev)} className="text-[9px] text-accent hover:underline">Editar</button>
+                  <button onClick={() => handleDelete(ev.id)} className="text-[9px] text-[var(--clay-error)] hover:underline">Borrar</button>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <form onSubmit={handleAdd} className="space-y-2 border-t border-border/30 pt-2">
+        <p className="text-[10px] text-text-muted font-medium">Agregar nuevo</p>
+        <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Evento" autoFocus className="h-7 text-xs" />
+        <div className="flex flex-wrap gap-1">
+          {CATS.map(c => (
+            <button key={c} type="button" onClick={() => setCat(c)} className={`px-2 py-1 text-[11px] rounded border ${cat === c ? 'bg-accent text-white border-transparent' : 'border-border text-text-secondary'}`}>{C[c].name}</button>
+          ))}
+        </div>
+        <div className="flex gap-2 justify-end">
+          <DialogClose asChild><Button variant="outline" type="button" className="h-6 text-[10px]">Cerrar</Button></DialogClose>
+          <Button type="submit" variant="ghost" className="h-6 text-[10px]">Agregar</Button>
+        </div>
+      </form>
+    </div>
   );
 }
 
@@ -115,9 +156,9 @@ export function CalendarView() {
         ))}
       </div>
       <Dialog open={!!ad} onOpenChange={o => !o && setAd(null)}>
-        <DialogContent className="sm:max-w-xs">
-          <DialogHeader><DialogTitle className="text-sm">Nuevo evento</DialogTitle></DialogHeader>
-          {ad && <AddEventForm dateKey={ad} />}
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle className="text-sm">Eventos del día</DialogTitle></DialogHeader>
+          {ad && <DayDialog dateKey={ad} onClose={() => setAd(null)} />}
         </DialogContent>
       </Dialog>
     </div>
