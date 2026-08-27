@@ -300,11 +300,13 @@ p { color: var(--clay-text-secondary); }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in, .animate-slide-in, .animate-draw-check,
-  .animate-toast-enter, .loading-spinner, .surface-card, .btn-clay {
+  .animate-toast-enter, .loading-spinner, .surface-card, .btn-clay,
+  .day-x-line-1, .day-x-line-2 {
     animation: none !important;
     transition: none !important;
   }
   .skeleton { animation: none !important; background: var(--clay-surface-elevated); }
+  .day-x-line-1, .day-x-line-2 { stroke-dashoffset: 0 !important; }
 }
 
 /* ── Scrollbar ── */
@@ -353,3 +355,27 @@ p { color: var(--clay-text-secondary); }
 
 /* ── Clip variants ── */
 .clip-pebble { border-radius: 1.5rem; }
+
+/* ── Calendar X marks (past days) ── */
+.day-x-mark { opacity: 0.7; }
+.day-x-line-1, .day-x-line-2 {
+  stroke-dasharray: 29;
+  stroke-dashoffset: 29;
+}
+.day-x-line-1 {
+  animation: draw-day-x 0.4s ease-out 0.1s forwards;
+}
+.day-x-line-2 {
+  animation: draw-day-x 0.4s ease-out 0.3s forwards;
+}
+@keyframes draw-day-x {
+  to { stroke-dashoffset: 0; }
+}
+
+/* ── Reduced motion: calendar ── */
+@media (prefers-reduced-motion: reduce) {
+  .day-x-line-1, .day-x-line-2 {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+}

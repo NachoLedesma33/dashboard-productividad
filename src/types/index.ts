@@ -22,3 +22,14 @@ export interface CompletionLogEntry {
   dateKey: string;
   createdAt: Date;
 }
+
+export type CalendarEventCategory = 'tarea' | 'examen' | 'medico' | 'reunion' | 'personal' | 'otro';
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  dateKey: string; // YYYY-MM-DD
+  category: CalendarEventCategory;
+  time?: string;   // HH:MM
+  createdAt: Date;
+}

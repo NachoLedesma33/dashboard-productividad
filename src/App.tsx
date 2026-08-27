@@ -13,6 +13,7 @@ const TaskBoard = lazy(() => import("@/components/tasks/TaskBoard").then((m) => 
 const HabitTracker = lazy(() => import("@/components/habits/HabitTracker").then((m) => ({ default: m.HabitTracker })));
 const InsightsPanel = lazy(() => import("@/components/ui/InsightsPanel").then((m) => ({ default: m.InsightsPanel })));
 const ProductivityChart = lazy(() => import("@/components/charts/ProductivityChart").then((m) => ({ default: m.ProductivityChart })));
+const CalendarView = lazy(() => import("@/components/calendar/CalendarView").then((m) => ({ default: m.CalendarView })));
 
 type Priority = "low" | "medium" | "high";
 
@@ -375,19 +376,31 @@ function App() {
             </div>
           </div>
 
-          {/* Bottom Row: Insights and Chart */}
+          {/* Calendar + Insights Row */}
           <div
-            className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-slide-in"
+            className="grid grid-cols-1 lg:grid-cols-[600px_1fr] gap-8 animate-slide-in"
             style={{ animationDelay: "0.2s" }}
           >
+            {/* Calendar */}
+            <div className="surface-card p-2 clip-pebble">
+              <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]"><div className="loading-spinner" /></div>}>
+                <CalendarView />
+              </Suspense>
+            </div>
+
             {/* Insights */}
             <div className="surface-card p-5">
               <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]"><div className="loading-spinner" /></div>}>
                 <InsightsPanel insights={insights} habits={habits} completionLog={completionLog} />
               </Suspense>
             </div>
+          </div>
 
-            {/* Productivity Chart */}
+          {/* Productivity Chart */}
+          <div
+            className="animate-slide-in"
+            style={{ animationDelay: "0.25s" }}
+          >
             <div className="surface-card p-5">
               <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]"><div className="loading-spinner" /></div>}>
                 <ProductivityChart completionLog={completionLog} totalTasks={totalTasks} />
@@ -399,7 +412,7 @@ function App() {
         {/* Footer */}
         <footer
           className="mt-16 pt-8 animate-slide-in"
-          style={{ animationDelay: "0.3s" }}
+          style={{ animationDelay: "0.35s" }}
         >
           <div className="surface-card p-6 text-center clip-pebble">
             <p className="text-sm text-text-muted">
