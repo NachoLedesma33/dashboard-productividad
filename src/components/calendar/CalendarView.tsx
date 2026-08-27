@@ -43,7 +43,7 @@ function DayCell({ day, year, month, events, onClick }: { day: number; year: num
   );
 }
 
-function DayDialog({ dateKey, onClose }: { dateKey: string; onClose: () => void }) {
+function DayDialog({ dateKey }: { dateKey: string }) {
   const [title, setTitle] = useState(''), [cat, setCat] = useState<CalendarEventCategory>('personal');
   const [editing, setEditing] = useState<string | null>(null), [editTitle, setEditTitle] = useState(''), [editCat, setEditCat] = useState<CalendarEventCategory>('personal');
   const { events, addEvent, deleteEvent, updateEvent } = useCalendarStore();
@@ -158,7 +158,7 @@ export function CalendarView() {
       <Dialog open={!!ad} onOpenChange={o => !o && setAd(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader><DialogTitle className="text-sm">Eventos del día</DialogTitle></DialogHeader>
-          {ad && <DayDialog dateKey={ad} onClose={() => setAd(null)} />}
+          {ad && <DayDialog dateKey={ad} />}
         </DialogContent>
       </Dialog>
     </div>
