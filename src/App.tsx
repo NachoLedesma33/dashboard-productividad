@@ -378,7 +378,7 @@ function App() {
 
           {/* Calendar + Insights Row */}
           <div
-            className="grid grid-cols-1 lg:grid-cols-[600px_1fr] gap-8 animate-slide-in"
+            className="grid grid-cols-1 lg:grid-cols-[660px_1fr] gap-8 animate-slide-in"
             style={{ animationDelay: "0.2s" }}
           >
             {/* Calendar */}

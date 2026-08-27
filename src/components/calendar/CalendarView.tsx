@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@
 const WEEKDAYS = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'];
 const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const CATS: CalendarEventCategory[] = ['tarea', 'examen', 'medico', 'reunion', 'personal', 'otro'];
-const C = { tarea: { l: 'T', c: '#c9956a' }, examen: { l: 'E', c: '#c47a6a' }, medico: { l: 'M', c: '#7aa87a' }, reunion: { l: 'R', c: '#8898a8' }, personal: { l: 'P', c: '#c4a060' }, otro: { l: 'O', c: '#a89888' } };
+const C = { tarea: { l: 'T', name: 'Tarea', c: '#c9956a' }, examen: { l: 'E', name: 'Examen', c: '#c47a6a' }, medico: { l: 'M', name: 'Médico', c: '#7aa87a' }, reunion: { l: 'R', name: 'Reunión', c: '#8898a8' }, personal: { l: 'P', name: 'Personal', c: '#c4a060' }, otro: { l: 'O', name: 'Otro', c: '#a89888' } };
 
 function getDM(y: number, m: number) { return new Date(y, m + 1, 0).getDate(); }
 function getFD(y: number, m: number) { const d = new Date(y, m, 1).getDay(); return d === 0 ? 6 : d - 1; }
@@ -55,7 +55,7 @@ function AddEventForm({ dateKey }: { dateKey: string }) {
       <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Evento" autoFocus className="h-7 text-xs" />
       <div className="flex flex-wrap gap-1">
         {CATS.map(c => (
-          <button key={c} type="button" onClick={() => setCat(c)} className={`px-1.5 py-0.5 text-[10px] rounded border ${cat === c ? 'bg-accent text-white border-transparent' : 'border-border text-text-secondary'}`}>{C[c].l}</button>
+          <button key={c} type="button" onClick={() => setCat(c)} className={`px-2 py-1 text-[11px] rounded border ${cat === c ? 'bg-accent text-white border-transparent' : 'border-border text-text-secondary'}`}>{C[c].name}</button>
         ))}
       </div>
       <div className="flex gap-2 justify-end">
@@ -106,11 +106,11 @@ export function CalendarView() {
           <DayCell key={i} day={i + 1} year={y} month={m} events={ebd[i + 1] || []} onClick={() => setAd(`${y}-${String(m + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`)} />
         ))}
       </div>
-      <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-1 pt-1 border-t border-border/30">
+      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 pt-1 border-t border-border/30">
         {CATS.map(c => (
           <div key={c} className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: C[c].c }} />
-            <span className="text-[10px] text-text-muted">{C[c].l}</span>
+            <span className="text-[11px] text-text-muted">{C[c].name}</span>
           </div>
         ))}
       </div>
