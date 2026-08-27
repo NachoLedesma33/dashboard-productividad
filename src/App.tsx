@@ -382,7 +382,7 @@ function App() {
             style={{ animationDelay: "0.2s" }}
           >
             {/* Calendar */}
-            <div className="surface-card p-2 clip-pebble">
+            <div className="surface-card px-3 py-4 clip-pebble">
               <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]"><div className="loading-spinner" /></div>}>
                 <CalendarView />
               </Suspense>

@@ -119,26 +119,26 @@ export function CalendarView() {
   const today = () => { const x = new Date(); setY(x.getFullYear()); setM(x.getMonth()); };
 
   return (
-    <div className="flex flex-col w-full">
-      <div className="flex items-center justify-between mb-0.5">
-        <div className="flex items-center gap-1">
-          <Calendar className="w-3.5 h-3.5 text-accent" />
-          <h2 className="text-[11px] font-bold text-text-primary">Calendario</h2>
-        </div>
+    <div className="flex flex-col w-full pt-1">
+      <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-1.5">
-          <button onClick={prev} className="w-5 h-5 rounded bg-surface-elevated hover:text-accent flex items-center justify-center" aria-label="Ant">
-            <ChevronLeft className="w-3 h-3" />
+          <Calendar className="w-4 h-4 text-accent" />
+          <h2 className="text-xs font-bold text-text-primary">Calendario</h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={prev} className="w-6 h-6 rounded bg-surface-elevated hover:text-accent flex items-center justify-center" aria-label="Ant">
+            <ChevronLeft className="w-3.5 h-3.5" />
           </button>
-          <span className="text-[11px] font-bold font-display text-text-primary">{MONTH_NAMES[m]} {y}</span>
-          {!isT(y, m, 1) && <button onClick={today} className="text-[9px] text-accent px-1 py-px rounded bg-accent-soft">Hoy</button>}
-          <button onClick={next} className="w-5 h-5 rounded bg-surface-elevated hover:text-accent flex items-center justify-center" aria-label="Sig">
-            <ChevronRight className="w-3 h-3" />
+          <span className="text-xs font-bold font-display text-text-primary">{MONTH_NAMES[m]} {y}</span>
+          {!isT(y, m, 1) && <button onClick={today} className="text-[10px] text-accent px-1.5 py-0.5 rounded bg-accent-soft">Hoy</button>}
+          <button onClick={next} className="w-6 h-6 rounded bg-surface-elevated hover:text-accent flex items-center justify-center" aria-label="Sig">
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-px mb-px">
+      <div className="grid grid-cols-7 gap-px mb-1">
         {WEEKDAYS.map((d, i) => (
-          <div key={d} className={`text-center text-[10px] font-semibold py-0.5 ${i >= 5 ? 'text-priority-medium/70' : 'text-text-muted'}`}>{d}</div>
+          <div key={d} className={`text-center text-[10px] font-semibold py-1 ${i >= 5 ? 'text-priority-medium/70' : 'text-text-muted'}`}>{d}</div>
         ))}
       </div>
       <div className="grid grid-cols-7 gap-px">
@@ -147,10 +147,10 @@ export function CalendarView() {
           <DayCell key={i} day={i + 1} year={y} month={m} events={ebd[i + 1] || []} onClick={() => setAd(`${y}-${String(m + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`)} />
         ))}
       </div>
-      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 pt-1 border-t border-border/30">
+      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 pt-2 border-t border-border/30">
         {CATS.map(c => (
-          <div key={c} className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: C[c].c }} />
+          <div key={c} className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: C[c].c }} />
             <span className="text-[11px] text-text-muted">{C[c].name}</span>
           </div>
         ))}
