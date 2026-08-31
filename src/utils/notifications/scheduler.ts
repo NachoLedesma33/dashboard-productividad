@@ -1,5 +1,12 @@
 import type { Task, Habit, NotificationSettings } from '@/types';
 
+export interface ReminderTarget {
+  id: string;
+  title: string;
+  reminderAt?: Date | null;
+  reminderMessage?: string;
+}
+
 const STORAGE_KEY = 'notification-settings';
 const SCHEDULED_KEY = 'scheduled-notifications';
 const DAILY_REMINDER_KEY = 'daily-habit-reminder-id';
@@ -96,6 +103,39 @@ export function cancelTaskReminder(taskId: string): void {
   if (timer) {
     clearTimeout(timer);
     timers.delete(taskId);
+    persistScheduledTimers();
+  }
+}
+
+export function scheduleItemReminder(item: ReminderTarget, settings: NotificationSettings, advanceMinutes = settings.advanceMinutes): void {
+  cancelItemReminder(item.id);
+
+  if (!settings.enabled || !settings.taskReminders || !item.reminderAt) return;
+
+  const reminderTime = new Date(item.reminderAt).getTime() - advanceMinutes * 60_000;
+  const now = Date.now();
+  const delay = reminderTime - now;
+
+  if (delay <= 0) return;
+
+  const timer = setTimeout(() => {
+    showNotification('Recordatorio', {
+      body: item.reminderMessage || `Recordatorio: ${item.title}`,
+      tag: `item-${item.id}`,
+      requireInteraction: true,
+    });
+    timers.delete(item.id);
+  }, delay);
+
+  timers.set(item.id, timer);
+  persistScheduledTimers();
+}
+
+export function cancelItemReminder(itemId: string): void {
+  const timer = timers.get(itemId);
+  if (timer) {
+    clearTimeout(timer);
+    timers.delete(itemId);
     persistScheduledTimers();
   }
 }

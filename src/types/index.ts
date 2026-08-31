@@ -34,6 +34,8 @@ export interface CalendarEvent {
   dateKey: string; // YYYY-MM-DD
   category: CalendarEventCategory;
   time?: string;   // HH:MM
+  reminderAt?: Date | null;
+  reminderMessage?: string;
   createdAt: Date;
 }
 

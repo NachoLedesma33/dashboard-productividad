@@ -79,6 +79,10 @@ export async function updateHabit(id: string, name: string): Promise<number> {
   return db.habits.update(id, { name });
 }
 
+export async function updateHabitReminder(id: string, time: string | null): Promise<number> {
+  return db.habits.update(id, { reminderTime: time });
+}
+
 export async function getAllHabits(): Promise<Habit[]> {
   return db.habits.toArray();
 }

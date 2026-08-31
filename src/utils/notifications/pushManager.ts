@@ -1,4 +1,9 @@
-import type { Task } from '@/types';
+export type ReminderTarget = {
+  id: string;
+  title: string;
+  reminderAt?: Date | null;
+  reminderMessage?: string;
+};
 
 const DEVICE_KEY = 'push-device-id';
 const REMINDER_MSG_KEY = 'push-reminder-messageIds';
@@ -87,28 +92,28 @@ export async function subscribeToPush(): Promise<boolean> {
   }
 }
 
-export async function scheduleReminder(task: Task, advanceMinutes: number, countdownDays = 7): Promise<string | null> {
-  if (!task.reminderAt || task.completed) return null;
+export async function scheduleReminder(target: ReminderTarget, advanceMinutes: number, countdownDays = 7): Promise<string | null> {
+  if (!target.reminderAt) return null;
   if (!(await isPushSupported())) return null;
 
-  const remindAt = new Date(task.reminderAt).getTime();
+  const remindAt = new Date(target.reminderAt).getTime();
   const now = Date.now();
   if (remindAt + advanceMinutes * 60_000 <= now) return null;
 
   try {
     const res = await post('/api/schedule', {
       deviceId: getDeviceId(),
-      taskId: task.id,
+      taskId: target.id,
       remindAt,
       advanceMinutes,
       countdownDays,
-      title: task.title,
-      message: task.reminderMessage || `Recordatorio: ${task.title}`,
+      title: target.title,
+      message: target.reminderMessage || `Recordatorio: ${target.title}`,
     });
     if (!res.ok) return null;
     const data = (await res.json()) as { messageIds?: string[] };
     if (data.messageIds?.length) {
-      saveReminderMessageIds(task.id, data.messageIds);
+      saveReminderMessageIds(target.id, data.messageIds);
     }
     return data.messageIds?.[0] ?? null;
   } catch (err) {

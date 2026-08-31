@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useMemo, useState, lazy, Suspense } from "react";
 import { useTaskStore } from "@/store/taskStore";
 import { useHabitStore } from "@/store/habitStore";
+import { useCalendarStore } from "@/store/calendarStore";
 import { useDatabase } from "@/hooks/useDatabase";
 import { useNotifications } from "@/hooks/useNotifications";
 import type { Insight } from "@/utils/analytics/insightsEngine";
@@ -10,7 +11,7 @@ import { toast } from "@/lib/toast";
 import { PlanDelDia } from "@/components/ui/PlanDelDia";
 import { NotificationSettingsDialog } from "@/components/notifications/NotificationSettings";
 import { Sparkles, FileText, Sun, Moon } from "lucide-react";
-import { scheduleTaskReminder, cancelTaskReminder } from "@/utils/notifications/scheduler";
+import { scheduleTaskReminder, cancelTaskReminder, scheduleItemReminder, cancelItemReminder } from "@/utils/notifications/scheduler";
 import { subscribeToPush, scheduleReminder, cancelReminder } from "@/utils/notifications/pushManager";
 
 const TaskBoard = lazy(() => import("@/components/tasks/TaskBoard").then((m) => ({ default: m.TaskBoard })));
@@ -80,11 +81,13 @@ function App() {
     fetchHabits,
     addHabit,
     updateHabit,
+    setHabitReminderTime,
     toggleHabit,
     deleteHabit,
     getTodayStatus,
     getStreak,
   } = useHabitStore();
+  const { events, updateEvent } = useCalendarStore();
 
   const [planOpen, setPlanOpen] = useState(false);
 
@@ -140,7 +143,10 @@ function App() {
         await updateTask(newTask.id, { reminderAt, reminderMessage });
         scheduleTaskReminder({ ...newTask, reminderAt, reminderMessage }, notifSettings);
         if (pushEnabled) {
-          scheduleReminder({ ...newTask, reminderAt, reminderMessage }, notifSettings.advanceMinutes);
+          scheduleReminder(
+            { id: newTask.id, title: newTask.title, reminderAt, reminderMessage },
+            notifSettings.advanceMinutes,
+          );
         }
       }
       toast("Tarea agregada", "success");
@@ -165,7 +171,10 @@ function App() {
       if (task) {
         scheduleTaskReminder({ ...task, title, priority, recurringDays, reminderAt, reminderMessage }, notifSettings);
         if (pushEnabled) {
-          scheduleReminder({ ...task, title, priority, recurringDays, reminderAt, reminderMessage }, notifSettings.advanceMinutes);
+          scheduleReminder(
+            { id: task.id, title: task.title, reminderAt, reminderMessage },
+            notifSettings.advanceMinutes,
+          );
         }
       }
       toast("Tarea actualizada", "success");
@@ -231,6 +240,51 @@ function App() {
       toast(wasDone ? "Hábito desmarcado" : "Hábito completado", "success");
     },
     [toggleHabit, getTodayStatus],
+  );
+
+  const handleUpdateTaskReminder = useCallback(
+    async (id: string, reminderAt: Date | null, message: string) => {
+      await updateTask(id, { reminderAt, reminderMessage: message || undefined });
+      const task = useTaskStore.getState().tasks.find((t) => t.id === id);
+      cancelTaskReminder(id);
+      cancelReminder(id);
+      if (task && reminderAt) {
+        scheduleTaskReminder({ ...task, reminderAt, reminderMessage: message || undefined }, notifSettings);
+        if (pushEnabled) {
+          scheduleReminder({ ...task, reminderAt, reminderMessage: message || undefined }, notifSettings.advanceMinutes);
+        }
+      }
+    },
+    [updateTask, notifSettings, pushEnabled],
+  );
+
+  const handleUpdateEventReminder = useCallback(
+    async (id: string, reminderAt: Date | null, message: string) => {
+      updateEvent(id, { reminderAt, reminderMessage: message || undefined });
+      const ev = useCalendarStore.getState().events.find((e) => e.id === id);
+      cancelItemReminder(id);
+      cancelReminder(id);
+      if (ev && reminderAt) {
+        scheduleItemReminder(
+          { id: ev.id, title: ev.title, reminderAt, reminderMessage: message || undefined },
+          notifSettings,
+        );
+        if (pushEnabled) {
+          scheduleReminder(
+            { id: ev.id, title: ev.title, reminderAt, reminderMessage: message || undefined },
+            notifSettings.advanceMinutes,
+          );
+        }
+      }
+    },
+    [updateEvent, notifSettings, pushEnabled],
+  );
+
+  const handleUpdateHabitReminder = useCallback(
+    async (id: string, time: string | null) => {
+      await setHabitReminderTime(id, time);
+    },
+    [setHabitReminderTime],
   );
 
   const handleResetDemoData = useCallback(async () => {
@@ -321,6 +375,12 @@ function App() {
                   isSupported={notifSupported}
                   onUpdate={updateNotifSettings}
                   onEnable={enableNotifications}
+                  tasks={tasks}
+                  habits={habits}
+                  events={events}
+                  onUpdateTaskReminder={handleUpdateTaskReminder}
+                  onUpdateEventReminder={handleUpdateEventReminder}
+                  onUpdateHabitReminder={handleUpdateHabitReminder}
                 />
                 <Button
                   onClick={handleResetDemoData}

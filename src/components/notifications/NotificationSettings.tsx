@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import type { NotificationSettings } from '@/types';
+import type { NotificationSettings, Task, Habit, CalendarEvent } from '@/types';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +10,7 @@ import {
   DialogTrigger,
   DialogClose,
 } from '@/components/ui/dialog';
-import { Bell, BellOff, Clock, CalendarDays, Volume2, VolumeX } from 'lucide-react';
+import { Bell, BellOff, Clock, CalendarDays, Volume2, VolumeX, ListChecks } from 'lucide-react';
 
 interface NotificationSettingsProps {
   settings: NotificationSettings;
@@ -17,6 +18,12 @@ interface NotificationSettingsProps {
   isSupported: boolean;
   onUpdate: (partial: Partial<NotificationSettings>) => void;
   onEnable: () => Promise<NotificationPermission>;
+  tasks?: Task[];
+  habits?: Habit[];
+  events?: CalendarEvent[];
+  onUpdateTaskReminder?: (id: string, reminderAt: Date | null, message: string) => void;
+  onUpdateEventReminder?: (id: string, reminderAt: Date | null, message: string) => void;
+  onUpdateHabitReminder?: (id: string, time: string | null) => void;
 }
 
 const ADVANCE_OPTIONS = [
@@ -56,14 +63,80 @@ function Toggle({
   );
 }
 
+function toLocalInput(date: Date | null | undefined): string {
+  if (!date) return '';
+  const d = new Date(date);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function fromLocalInput(value: string): Date {
+  return new Date(value);
+}
+
+function ItemRow({
+  title,
+  checked,
+  onToggle,
+  hasWhen,
+  whenValue,
+  onWhen,
+  messageValue,
+  onMessage,
+  kind,
+}: {
+  title: string;
+  checked: boolean;
+  onToggle: (v: boolean) => void;
+  hasWhen: boolean;
+  whenValue: string;
+  onWhen: (v: string) => void;
+  messageValue: string;
+  onMessage: (v: string) => void;
+  kind: 'datetime' | 'time';
+}) {
+  return (
+    <div className="rounded-lg bg-surface-elevated p-2 space-y-1.5">
+      <div className="flex items-center gap-2">
+        <Toggle checked={checked} onChange={onToggle} disabled={!hasWhen} />
+        <span className="flex-1 text-xs text-text-primary font-medium truncate">{title}</span>
+      </div>
+      {checked && (
+        <div className="space-y-1.5">
+          <input
+            type={kind}
+            value={whenValue}
+            onChange={(e) => onWhen(e.target.value)}
+            className="block w-full px-2 py-1 text-xs rounded-lg bg-background border border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+          />
+          <Input
+            value={messageValue}
+            onChange={(e) => onMessage(e.target.value)}
+            placeholder="Mensaje (opcional)"
+            className="h-7 text-xs"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function NotificationSettingsPanel({
   settings,
   permission,
   isSupported,
   onUpdate,
   onEnable,
+  tasks,
+  habits,
+  events,
+  onUpdateTaskReminder,
+  onUpdateEventReminder,
+  onUpdateHabitReminder,
 }: NotificationSettingsProps) {
   const [enableLoading, setEnableLoading] = useState(false);
+  const [taskDrafts, setTaskDrafts] = useState<Record<string, { when: string; msg: string }>>({});
+  const [eventDrafts, setEventDrafts] = useState<Record<string, { when: string; msg: string }>>({});
 
   const handleEnable = async () => {
     setEnableLoading(true);
@@ -79,6 +152,9 @@ export function NotificationSettingsPanel({
       </div>
     );
   }
+
+  const visibleTasks = (tasks ?? []).filter((t) => !t.completed);
+  const visibleEvents = events ?? [];
 
   return (
     <div className="space-y-5">
@@ -183,6 +259,108 @@ export function NotificationSettingsPanel({
 
           <div className="h-px bg-border" />
 
+          {/* Items with reminders */}
+          {(visibleTasks.length > 0 || visibleEvents.length > 0 || (habits ?? []).length > 0) && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <ListChecks className="w-4 h-4 text-text-secondary" />
+                <span className="text-sm font-medium text-text-primary">Notificar estos elementos</span>
+              </div>
+
+              {visibleTasks.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] uppercase tracking-wide text-text-muted font-semibold">Tareas</p>
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                    {visibleTasks.map((t) => {
+                      const draft = taskDrafts[t.id] ?? {
+                        when: toLocalInput(t.reminderAt),
+                        msg: t.reminderMessage ?? '',
+                      };
+                      return (
+                        <ItemRow
+                          key={t.id}
+                          kind="datetime"
+                          title={t.title}
+                          checked={!!t.reminderAt}
+                          hasWhen
+                          whenValue={draft.when}
+                          onWhen={(v) => setTaskDrafts((s) => ({ ...s, [t.id]: { ...draft, when: v } }))}
+                          messageValue={draft.msg}
+                          onMessage={(v) => setTaskDrafts((s) => ({ ...s, [t.id]: { ...draft, msg: v } }))}
+                          onToggle={(v) => {
+                            if (!v) {
+                              onUpdateTaskReminder?.(t.id, null, '');
+                            } else if (draft.when) {
+                              onUpdateTaskReminder?.(t.id, fromLocalInput(draft.when), draft.msg);
+                            }
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {visibleEvents.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] uppercase tracking-wide text-text-muted font-semibold">Calendario</p>
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                    {visibleEvents.map((ev) => {
+                      const draft = eventDrafts[ev.id] ?? {
+                        when: toLocalInput(ev.reminderAt),
+                        msg: ev.reminderMessage ?? '',
+                      };
+                      return (
+                        <ItemRow
+                          key={ev.id}
+                          kind="datetime"
+                          title={ev.title}
+                          checked={!!ev.reminderAt}
+                          hasWhen
+                          whenValue={draft.when}
+                          onWhen={(v) => setEventDrafts((s) => ({ ...s, [ev.id]: { ...draft, when: v } }))}
+                          messageValue={draft.msg}
+                          onMessage={(v) => setEventDrafts((s) => ({ ...s, [ev.id]: { ...draft, msg: v } }))}
+                          onToggle={(v) => {
+                            if (!v) {
+                              onUpdateEventReminder?.(ev.id, null, '');
+                            } else if (draft.when) {
+                              onUpdateEventReminder?.(ev.id, fromLocalInput(draft.when), draft.msg);
+                            }
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {(habits ?? []).length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] uppercase tracking-wide text-text-muted font-semibold">Hábitos</p>
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                    {(habits ?? []).map((h) => (
+                      <ItemRow
+                        key={h.id}
+                        kind="time"
+                        title={h.name}
+                        checked={!!h.reminderTime}
+                        hasWhen
+                        whenValue={h.reminderTime ?? ''}
+                        onWhen={(v) => onUpdateHabitReminder?.(h.id, v || null)}
+                        messageValue=""
+                        onMessage={() => {}}
+                        onToggle={(v) => onUpdateHabitReminder?.(h.id, v ? (h.reminderTime ?? '09:00') : null)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="h-px bg-border" />
+
           {/* Sound */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -201,13 +379,8 @@ export function NotificationSettingsPanel({
   );
 }
 
-export function NotificationSettingsDialog({
-  settings,
-  permission,
-  isSupported,
-  onUpdate,
-  onEnable,
-}: NotificationSettingsProps) {
+export function NotificationSettingsDialog(props: NotificationSettingsProps) {
+  const { settings } = props;
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -231,13 +404,7 @@ export function NotificationSettingsDialog({
         <DialogHeader>
           <DialogTitle>Configurar notificaciones</DialogTitle>
         </DialogHeader>
-        <NotificationSettingsPanel
-          settings={settings}
-          permission={permission}
-          isSupported={isSupported}
-          onUpdate={onUpdate}
-          onEnable={onEnable}
-        />
+        <NotificationSettingsPanel {...props} />
         <div className="flex justify-end pt-2">
           <DialogClose asChild>
             <Button variant="ghost" size="sm">Cerrar</Button>

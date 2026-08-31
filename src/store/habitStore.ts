@@ -78,6 +78,7 @@ interface HabitState {
   fetchHabits: () => Promise<void>;
   addHabit: (name: string) => Promise<void>;
   updateHabit: (habitId: string, name: string) => Promise<void>;
+  setHabitReminderTime: (habitId: string, time: string | null) => Promise<void>;
   toggleHabit: (habitId: string) => Promise<void>;
   deleteHabit: (habitId: string) => Promise<void>;
   getTodayStatus: (habitId: string) => boolean;
@@ -131,6 +132,14 @@ export const useHabitStore = create<HabitState>()(devLogger((set, get) => ({
     await dbUpdateHabit(habitId, name);
     set((state) => ({
       habits: state.habits.map((h) => (h.id === habitId ? { ...h, name } : h)),
+    }));
+  },
+
+  setHabitReminderTime: async (habitId, time) => {
+    const { updateHabitReminder } = await getDb();
+    await updateHabitReminder(habitId, time);
+    set((state) => ({
+      habits: state.habits.map((h) => (h.id === habitId ? { ...h, reminderTime: time } : h)),
     }));
   },
 
