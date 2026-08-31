@@ -87,28 +87,30 @@ export async function subscribeToPush(): Promise<boolean> {
   }
 }
 
-export async function scheduleReminder(task: Task, advanceMinutes: number): Promise<string | null> {
+export async function scheduleReminder(task: Task, advanceMinutes: number, countdownDays = 7): Promise<string | null> {
   if (!task.reminderAt || task.completed) return null;
   if (!(await isPushSupported())) return null;
 
-  const remindAt = new Date(task.reminderAt).getTime() - advanceMinutes * 60_000;
+  const remindAt = new Date(task.reminderAt).getTime();
   const now = Date.now();
-  if (remindAt <= now) return null;
+  if (remindAt + advanceMinutes * 60_000 <= now) return null;
 
   try {
     const res = await post('/api/schedule', {
       deviceId: getDeviceId(),
       taskId: task.id,
       remindAt,
-      title: 'Recordatorio',
+      advanceMinutes,
+      countdownDays,
+      title: task.title,
       message: task.reminderMessage || `Recordatorio: ${task.title}`,
     });
     if (!res.ok) return null;
-    const data = (await res.json()) as { messageId?: string };
-    if (data.messageId) {
-      saveReminderMessageId(task.id, data.messageId);
+    const data = (await res.json()) as { messageIds?: string[] };
+    if (data.messageIds?.length) {
+      saveReminderMessageIds(task.id, data.messageIds);
     }
-    return data.messageId ?? null;
+    return data.messageIds?.[0] ?? null;
   } catch (err) {
     console.warn('[Push] schedule failed:', err);
     return null;
@@ -116,35 +118,34 @@ export async function scheduleReminder(task: Task, advanceMinutes: number): Prom
 }
 
 export async function cancelReminder(taskId: string): Promise<void> {
-  const messageId = getReminderMessageId(taskId);
-  if (!messageId) return;
   try {
-    await post('/api/cancel', { deviceId: getDeviceId(), taskId, messageId });
+    await post('/api/cancel', { deviceId: getDeviceId(), taskId });
   } catch (err) {
     console.warn('[Push] cancel failed:', err);
   } finally {
-    clearReminderMessageId(taskId);
+    clearReminderMessageIds(taskId);
   }
 }
 
-export function getReminderMessageId(taskId: string): string | null {
+export function getReminderMessageIds(taskId: string): string[] {
   try {
     const map = JSON.parse(localStorage.getItem(REMINDER_MSG_KEY) || '{}');
-    return map[taskId] || null;
+    const ids = map[taskId];
+    return Array.isArray(ids) ? ids : ids ? [ids] : [];
   } catch {
-    return null;
+    return [];
   }
 }
 
-function saveReminderMessageId(taskId: string, messageId: string): void {
+function saveReminderMessageIds(taskId: string, messageIds: string[]): void {
   try {
     const map = JSON.parse(localStorage.getItem(REMINDER_MSG_KEY) || '{}');
-    map[taskId] = messageId;
+    map[taskId] = messageIds;
     localStorage.setItem(REMINDER_MSG_KEY, JSON.stringify(map));
   } catch { /* ignore */ }
 }
 
-export function clearReminderMessageId(taskId: string): void {
+export function clearReminderMessageIds(taskId: string): void {
   try {
     const map = JSON.parse(localStorage.getItem(REMINDER_MSG_KEY) || '{}');
     delete map[taskId];

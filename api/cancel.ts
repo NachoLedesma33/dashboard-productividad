@@ -16,29 +16,36 @@ export default (async function cancel(req, res) {
   const deviceId = body?.deviceId;
   const taskId = body?.taskId;
 
-  let messageId = body?.messageId;
-  if (!messageId && deviceId && taskId) {
-    messageId = (await kv.get<string>(`remTask:${deviceId}:${taskId}`)) || undefined;
+  let messageIds: string[] = [];
+  if (body?.messageId) {
+    messageIds = [body.messageId];
+  } else if (deviceId && taskId) {
+    const stored = await kv.get<string[] | string>(`remTask:${deviceId}:${taskId}`);
+    messageIds = Array.isArray(stored) ? stored : stored ? [stored] : [];
   }
 
-  if (!messageId) {
+  if (messageIds.length === 0) {
     res.status(200).json({ ok: true, skipped: 'no message' });
     return;
   }
 
   const client = getQstashClient();
   if (client) {
-    try {
-      await client.messages.delete(messageId);
-    } catch (err) {
-      console.warn('[cancel] QStash delete failed (may be already delivered):', err);
+    for (const id of messageIds) {
+      try {
+        await client.messages.delete(id);
+      } catch (err) {
+        console.warn('[cancel] QStash delete failed (may be already delivered):', err);
+      }
     }
   }
 
-  await kv.del(`reminders:${messageId}`);
+  for (const id of messageIds) {
+    await kv.del(`reminders:${id}`);
+  }
   if (deviceId && taskId) {
     await kv.del(`remTask:${deviceId}:${taskId}`);
   }
 
-  res.status(200).json({ ok: true });
+  res.status(200).json({ ok: true, cancelled: messageIds.length });
 }) as Handler;
