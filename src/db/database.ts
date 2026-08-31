@@ -8,9 +8,9 @@ class ProductivityDatabase extends Dexie {
 
   constructor() {
     super('productivity-db');
-    this.version(2).stores({
-      tasks: 'id, priority, completedAt',
-      habits: 'id',
+    this.version(3).stores({
+      tasks: 'id, priority, completedAt, reminderAt',
+      habits: 'id, reminderTime',
       completionLog: '++id, dateKey, taskId',
     });
   }

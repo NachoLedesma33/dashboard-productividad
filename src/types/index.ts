@@ -8,12 +8,15 @@ export interface Task {
   completedAt: Date | null;
   createdAt: Date;
   recurringDays?: number[];
+  reminderAt?: Date | null;
+  reminderMessage?: string;
 }
 
 export interface Habit {
   id: string;
   name: string;
   completionDates: Date[];
+  reminderTime?: string | null; // HH:MM format
 }
 
 export interface CompletionLogEntry {
@@ -32,4 +35,13 @@ export interface CalendarEvent {
   category: CalendarEventCategory;
   time?: string;   // HH:MM
   createdAt: Date;
+}
+
+export interface NotificationSettings {
+  enabled: boolean;
+  taskReminders: boolean;
+  dailyHabitReminder: boolean;
+  dailyHabitTime: string; // HH:MM
+  advanceMinutes: number; // minutes before task reminder
+  sound: boolean;
 }

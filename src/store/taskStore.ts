@@ -11,7 +11,7 @@ interface TaskState {
   toggleTask: (id: string) => Promise<void>;
   updateTask: (
     id: string,
-    changes: Partial<Pick<Task, 'title' | 'priority' | 'recurringDays'>>
+    changes: Partial<Pick<Task, 'title' | 'priority' | 'recurringDays' | 'reminderAt' | 'reminderMessage'>>
   ) => Promise<void>;
   updatePriority: (id: string, priority: Task['priority']) => Promise<void>;
   reorderTasks: (tasks: Task[]) => Promise<void>;

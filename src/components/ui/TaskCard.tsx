@@ -1,6 +1,6 @@
 import { memo, useCallback } from "react";
 import type { Task, Priority } from "@/types";
-import { Pencil, X } from "lucide-react";
+import { Pencil, X, Bell } from "lucide-react";
 
 interface TaskCardProps {
   task: Task;
@@ -107,6 +107,16 @@ export const TaskCard = memo(function TaskCard({ task, onToggle, onDelete, onEdi
       >
         {task.title}
       </span>
+
+      {task.reminderAt && !task.completed && (
+        <span
+          data-no-dnd
+          className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium text-accent bg-accent/10 rounded-md"
+          title={task.reminderMessage || `Recordatorio: ${new Date(task.reminderAt).toLocaleString('es')}`}
+        >
+          <Bell className="w-3 h-3" aria-hidden="true" />
+        </span>
+      )}
 
       <div className="relative shrink-0">
         <span

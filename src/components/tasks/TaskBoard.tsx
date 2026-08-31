@@ -31,7 +31,7 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { Circle, Eye, EyeOff, Repeat } from "lucide-react";
+import { Circle, Eye, EyeOff, Repeat, Bell } from "lucide-react";
 
 const DAY_LABELS = ["D", "L", "M", "M", "J", "V", "S"];
 const DAY_ABBR = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -40,9 +40,9 @@ interface TaskBoardProps {
   tasks: Task[];
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
-  onEditTask: (id: string, title: string, priority: Priority, recurringDays?: number[]) => void;
+  onEditTask: (id: string, title: string, priority: Priority, recurringDays?: number[], reminderAt?: Date | null, reminderMessage?: string) => void;
   onPriorityChange: (id: string, priority: Priority) => void;
-  onAddTask: (title: string, priority: Priority, recurringDays?: number[]) => void;
+  onAddTask: (title: string, priority: Priority, recurringDays?: number[], reminderAt?: Date | null, reminderMessage?: string) => void;
   onReorder: (tasks: Task[]) => void;
 }
 
@@ -186,21 +186,34 @@ function AddTaskInput({
   onClose,
 }: {
   priority: Priority;
-  onAdd: (title: string, priority: Priority, recurringDays?: number[]) => void;
+  onAdd: (title: string, priority: Priority, recurringDays?: number[], reminderAt?: Date | null, reminderMessage?: string) => void;
   onClose: () => void;
 }) {
   const [title, setTitle] = useState("");
   const [showRecurring, setShowRecurring] = useState(false);
   const [recurringDays, setRecurringDays] = useState<number[]>([]);
+  const [showReminder, setShowReminder] = useState(false);
+  const [reminderAt, setReminderAt] = useState("");
+  const [reminderMessage, setReminderMessage] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-const handleAdd = () => {
+  const handleAdd = () => {
     if (title.trim()) {
-      onAdd(title.trim(), priority, recurringDays.length > 0 ? recurringDays : undefined);
+      const reminderDate = reminderAt ? new Date(reminderAt) : undefined;
+      onAdd(
+        title.trim(),
+        priority,
+        recurringDays.length > 0 ? recurringDays : undefined,
+        reminderDate ?? null,
+        reminderMessage || undefined
+      );
       setTitle("");
       setRecurringDays([]);
       setShowRecurring(false);
+      setShowReminder(false);
+      setReminderAt("");
+      setReminderMessage("");
       onClose();
     }
   };
@@ -260,9 +273,38 @@ const handleAdd = () => {
             </span>
           )}
         </button>
+        <button
+          type="button"
+          onClick={() => setShowReminder(!showReminder)}
+          className={`flex items-center gap-1 text-xs font-medium transition-colors ${
+            showReminder || reminderAt
+              ? "text-accent"
+              : "text-text-muted hover:text-text-secondary"
+          }`}
+        >
+          <Bell className="w-3.5 h-3.5" aria-hidden="true" />
+          Recordar
+        </button>
       </div>
       {showRecurring && (
         <DayPicker selected={recurringDays} onChange={setRecurringDays} />
+      )}
+      {showReminder && (
+        <div className="space-y-2 animate-fade-in">
+          <input
+            type="datetime-local"
+            value={reminderAt}
+            onChange={(e) => setReminderAt(e.target.value)}
+            className="block w-full px-3 py-2 text-sm rounded-xl bg-surface-elevated border border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+            aria-label="Fecha y hora del recordatorio"
+          />
+          <Input
+            value={reminderMessage}
+            onChange={(e) => setReminderMessage(e.target.value)}
+            placeholder="Mensaje del recordatorio (opcional)"
+            aria-label="Mensaje del recordatorio"
+          />
+        </div>
       )}
     </div>
   );
@@ -280,16 +322,32 @@ function EditTaskDialog({
   onClose,
 }: {
   task: Task;
-  onSave: (title: string, priority: Priority, recurringDays?: number[]) => void;
+  onSave: (title: string, priority: Priority, recurringDays?: number[], reminderAt?: Date | null, reminderMessage?: string) => void;
   onClose: () => void;
 }) {
   const [title, setTitle] = useState(task.title);
   const [priority, setPriority] = useState<Priority>(task.priority);
   const [recurringDays, setRecurringDays] = useState<number[]>(task.recurringDays ?? []);
+  const [reminderAt, setReminderAt] = useState(() => {
+    if (task.reminderAt) {
+      const d = new Date(task.reminderAt);
+      const pad = (n: number) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+    return "";
+  });
+  const [reminderMessage, setReminderMessage] = useState(task.reminderMessage ?? "");
 
   const handleSave = () => {
     if (title.trim()) {
-      onSave(title.trim(), priority, recurringDays.length > 0 ? recurringDays : undefined);
+      const reminderDate = reminderAt ? new Date(reminderAt) : null;
+      onSave(
+        title.trim(),
+        priority,
+        recurringDays.length > 0 ? recurringDays : undefined,
+        reminderDate,
+        reminderMessage || undefined
+      );
       onClose();
     }
   };
@@ -348,6 +406,26 @@ function EditTaskDialog({
           </button>
           <DayPicker selected={recurringDays} onChange={setRecurringDays} />
         </div>
+        <div className="h-px bg-border" />
+        <div className="space-y-2">
+          <label className="flex items-center gap-1.5 text-xs font-semibold text-text-secondary">
+            <Bell className="w-3.5 h-3.5" aria-hidden="true" />
+            Recordatorio
+          </label>
+          <input
+            type="datetime-local"
+            value={reminderAt}
+            onChange={(e) => setReminderAt(e.target.value)}
+            className="block w-full px-3 py-2 text-sm rounded-xl bg-surface-elevated border border-border text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+            aria-label="Fecha y hora del recordatorio"
+          />
+          <Input
+            value={reminderMessage}
+            onChange={(e) => setReminderMessage(e.target.value)}
+            placeholder="Mensaje del recordatorio (opcional)"
+            aria-label="Mensaje del recordatorio"
+          />
+        </div>
       </div>
       <DialogFooter>
         <DialogClose asChild>
@@ -374,7 +452,7 @@ function Column({
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onEditTask: (id: string) => void;
-  onAddTask: (title: string, priority: Priority, recurringDays?: number[]) => void;
+  onAddTask: (title: string, priority: Priority, recurringDays?: number[], reminderAt?: Date | null, reminderMessage?: string) => void;
 }) {
   const [showInput, setShowInput] = useState(false);
   const cfg = columnConfig[priority];
@@ -597,8 +675,8 @@ export function TaskBoard({
           <Dialog open onOpenChange={(open) => !open && setEditingTaskId(null)}>
             <EditTaskDialog
               task={editingTask}
-              onSave={(title, priority, recurringDays) =>
-                onEditTask(editingTask.id, title, priority, recurringDays)
+              onSave={(title, priority, recurringDays, reminderAt, reminderMessage) =>
+                onEditTask(editingTask.id, title, priority, recurringDays, reminderAt, reminderMessage)
               }
               onClose={() => setEditingTaskId(null)}
             />

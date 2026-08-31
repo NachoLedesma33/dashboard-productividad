@@ -2,12 +2,15 @@ import { useEffect, useCallback, useMemo, useState, lazy, Suspense } from "react
 import { useTaskStore } from "@/store/taskStore";
 import { useHabitStore } from "@/store/habitStore";
 import { useDatabase } from "@/hooks/useDatabase";
+import { useNotifications } from "@/hooks/useNotifications";
 import type { Insight } from "@/utils/analytics/insightsEngine";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/Toaster";
 import { toast } from "@/lib/toast";
 import { PlanDelDia } from "@/components/ui/PlanDelDia";
+import { NotificationSettingsDialog } from "@/components/notifications/NotificationSettings";
 import { Sparkles, FileText, Sun, Moon } from "lucide-react";
+import { scheduleTaskReminder, cancelTaskReminder } from "@/utils/notifications/scheduler";
 
 const TaskBoard = lazy(() => import("@/components/tasks/TaskBoard").then((m) => ({ default: m.TaskBoard })));
 const HabitTracker = lazy(() => import("@/components/habits/HabitTracker").then((m) => ({ default: m.HabitTracker })));
@@ -43,6 +46,7 @@ function TaskBoardSkeleton() {
 
 function App() {
   const { resetDatabase } = useDatabase();
+  const { settings: notifSettings, permission: notifPermission, isSupported: notifSupported, updateSettings: updateNotifSettings, enable: enableNotifications, syncReminders } = useNotifications();
 
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const stored = localStorage.getItem('theme');
@@ -103,21 +107,32 @@ function App() {
   const [insights, setInsights] = useState<Insight[]>([]);
 
   useEffect(() => {
+    syncReminders(tasks, habits);
+  }, [tasks, habits, syncReminders]);
+
+  useEffect(() => {
     import("@/utils/analytics/insightsEngine").then((m) => {
       setInsights(m.generateInsights(tasks, habits, completionLog));
     });
   }, [tasks, habits, completionLog]);
 
   const handleAddTask = useCallback(
-    async (title: string, priority: Priority, recurringDays?: number[]) => {
+    async (title: string, priority: Priority, recurringDays?: number[], reminderAt?: Date | null, reminderMessage?: string) => {
       await addTask(title, priority, recurringDays);
+      const store = useTaskStore.getState();
+      const newTask = store.tasks[store.tasks.length - 1];
+      if (newTask && reminderAt) {
+        await updateTask(newTask.id, { reminderAt, reminderMessage });
+        scheduleTaskReminder({ ...newTask, reminderAt, reminderMessage }, notifSettings);
+      }
       toast("Tarea agregada", "success");
     },
-    [addTask],
+    [addTask, updateTask, notifSettings],
   );
 
   const handleDeleteTask = useCallback(
     async (id: string) => {
+      cancelTaskReminder(id);
       await deleteTask(id);
       toast("Tarea eliminada", "info");
     },
@@ -125,11 +140,15 @@ function App() {
   );
 
   const handleEditTask = useCallback(
-    async (id: string, title: string, priority: Priority, recurringDays?: number[]) => {
-      await updateTask(id, { title, priority, recurringDays });
+    async (id: string, title: string, priority: Priority, recurringDays?: number[], reminderAt?: Date | null, reminderMessage?: string) => {
+      await updateTask(id, { title, priority, recurringDays, reminderAt, reminderMessage });
+      const task = useTaskStore.getState().tasks.find((t) => t.id === id);
+      if (task) {
+        scheduleTaskReminder({ ...task, title, priority, recurringDays, reminderAt, reminderMessage }, notifSettings);
+      }
       toast("Tarea actualizada", "success");
     },
-    [updateTask],
+    [updateTask, notifSettings],
   );
 
   const handlePriorityChange = useCallback(
@@ -274,6 +293,13 @@ function App() {
                   <FileText className="w-4 h-4 mr-1.5 icon-clay" aria-hidden="true" />
                   Reporte semanal
                 </Button>
+                <NotificationSettingsDialog
+                  settings={notifSettings}
+                  permission={notifPermission}
+                  isSupported={notifSupported}
+                  onUpdate={updateNotifSettings}
+                  onEnable={enableNotifications}
+                />
                 <Button
                   onClick={handleResetDemoData}
                   variant="ghost"
