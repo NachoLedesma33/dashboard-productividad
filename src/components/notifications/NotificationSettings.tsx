@@ -74,6 +74,12 @@ function fromLocalInput(value: string): Date {
   return new Date(value);
 }
 
+function defaultWhen(days = 0): string {
+  const d = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+  d.setMinutes(d.getMinutes() + 60);
+  return toLocalInput(d);
+}
+
 function ItemRow({
   title,
   checked,
@@ -273,7 +279,7 @@ export function NotificationSettingsPanel({
                   <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
                     {visibleTasks.map((t) => {
                       const draft = taskDrafts[t.id] ?? {
-                        when: toLocalInput(t.reminderAt),
+                        when: t.reminderAt ? toLocalInput(t.reminderAt) : defaultWhen(),
                         msg: t.reminderMessage ?? '',
                       };
                       return (
@@ -290,7 +296,7 @@ export function NotificationSettingsPanel({
                           onToggle={(v) => {
                             if (!v) {
                               onUpdateTaskReminder?.(t.id, null, '');
-                            } else if (draft.when) {
+                            } else {
                               onUpdateTaskReminder?.(t.id, fromLocalInput(draft.when), draft.msg);
                             }
                           }}
@@ -306,8 +312,19 @@ export function NotificationSettingsPanel({
                   <p className="text-[10px] uppercase tracking-wide text-text-muted font-semibold">Calendario</p>
                   <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
                     {visibleEvents.map((ev) => {
+                      const evDefault = (() => {
+                        if (ev.reminderAt) return toLocalInput(ev.reminderAt);
+                        const base = new Date(ev.dateKey + 'T00:00:00');
+                        if (ev.time) {
+                          const [hh, mm] = ev.time.split(':').map(Number);
+                          base.setHours(hh, mm, 0, 0);
+                        } else {
+                          base.setHours(9, 0, 0, 0);
+                        }
+                        return toLocalInput(base);
+                      })();
                       const draft = eventDrafts[ev.id] ?? {
-                        when: toLocalInput(ev.reminderAt),
+                        when: evDefault,
                         msg: ev.reminderMessage ?? '',
                       };
                       return (
@@ -324,7 +341,7 @@ export function NotificationSettingsPanel({
                           onToggle={(v) => {
                             if (!v) {
                               onUpdateEventReminder?.(ev.id, null, '');
-                            } else if (draft.when) {
+                            } else {
                               onUpdateEventReminder?.(ev.id, fromLocalInput(draft.when), draft.msg);
                             }
                           }}
