@@ -10,6 +10,9 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       registerType: 'autoUpdate',
       injectRegister: 'inline',
       includeAssets: ['favicon.svg'],
@@ -23,7 +26,6 @@ export default defineConfig({
         background_color: '#0A0E17',
         theme_color: '#6366F1',
         icons: [
-          { src: '/icon-144x144.png?v=2', sizes: '144x144', type: 'image/png' },
           { src: '/icon-192x192.png?v=2', sizes: '192x192', type: 'image/png' },
           { src: '/icon-512x512.png?v=2', sizes: '512x512', type: 'image/png' },
         ],

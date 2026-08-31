@@ -11,6 +11,7 @@ import { PlanDelDia } from "@/components/ui/PlanDelDia";
 import { NotificationSettingsDialog } from "@/components/notifications/NotificationSettings";
 import { Sparkles, FileText, Sun, Moon } from "lucide-react";
 import { scheduleTaskReminder, cancelTaskReminder } from "@/utils/notifications/scheduler";
+import { subscribeToPush, scheduleReminder, cancelReminder } from "@/utils/notifications/pushManager";
 
 const TaskBoard = lazy(() => import("@/components/tasks/TaskBoard").then((m) => ({ default: m.TaskBoard })));
 const HabitTracker = lazy(() => import("@/components/habits/HabitTracker").then((m) => ({ default: m.HabitTracker })));
@@ -106,6 +107,20 @@ function App() {
 
   const [insights, setInsights] = useState<Insight[]>([]);
 
+  const pushEnabled = notifSettings.enabled && notifSettings.taskReminders;
+
+  useEffect(() => {
+    if (notifSettings.enabled && notifSettings.taskReminders && notifPermission === 'granted') {
+      let cancelled = false;
+      subscribeToPush().then((ok) => {
+        if (!cancelled && !ok) {
+          toast("Las notificaciones push remotas no están disponibles. Configura la clave VAPID.", "info");
+        }
+      });
+      return () => { cancelled = true; };
+    }
+  }, [notifSettings.enabled, notifSettings.taskReminders, notifPermission]);
+
   useEffect(() => {
     syncReminders(tasks, habits);
   }, [tasks, habits, syncReminders]);
@@ -124,15 +139,19 @@ function App() {
       if (newTask && reminderAt) {
         await updateTask(newTask.id, { reminderAt, reminderMessage });
         scheduleTaskReminder({ ...newTask, reminderAt, reminderMessage }, notifSettings);
+        if (pushEnabled) {
+          scheduleReminder({ ...newTask, reminderAt, reminderMessage }, notifSettings.advanceMinutes);
+        }
       }
       toast("Tarea agregada", "success");
     },
-    [addTask, updateTask, notifSettings],
+    [addTask, updateTask, notifSettings, pushEnabled],
   );
 
   const handleDeleteTask = useCallback(
     async (id: string) => {
       cancelTaskReminder(id);
+      cancelReminder(id);
       await deleteTask(id);
       toast("Tarea eliminada", "info");
     },
@@ -145,10 +164,13 @@ function App() {
       const task = useTaskStore.getState().tasks.find((t) => t.id === id);
       if (task) {
         scheduleTaskReminder({ ...task, title, priority, recurringDays, reminderAt, reminderMessage }, notifSettings);
+        if (pushEnabled) {
+          scheduleReminder({ ...task, title, priority, recurringDays, reminderAt, reminderMessage }, notifSettings.advanceMinutes);
+        }
       }
       toast("Tarea actualizada", "success");
     },
-    [updateTask, notifSettings],
+    [updateTask, notifSettings, pushEnabled],
   );
 
   const handlePriorityChange = useCallback(
