@@ -2,7 +2,6 @@ import { useEffect, useCallback, useMemo, useState, lazy, Suspense } from "react
 import { useTaskStore } from "@/store/taskStore";
 import { useHabitStore } from "@/store/habitStore";
 import { useCalendarStore } from "@/store/calendarStore";
-import { useDatabase } from "@/hooks/useDatabase";
 import { useNotifications } from "@/hooks/useNotifications";
 import type { Insight } from "@/utils/analytics/insightsEngine";
 import { Button } from "@/components/ui/button";
@@ -47,7 +46,6 @@ function TaskBoardSkeleton() {
 }
 
 function App() {
-  const { resetDatabase } = useDatabase();
   const { settings: notifSettings, permission: notifPermission, isSupported: notifSupported, updateSettings: updateNotifSettings, enable: enableNotifications, syncReminders } = useNotifications();
 
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -287,12 +285,6 @@ function App() {
     [setHabitReminderTime],
   );
 
-  const handleResetDemoData = useCallback(async () => {
-    await resetDatabase();
-    const { seedDatabase } = await import("@/utils/seedData");
-    await seedDatabase();
-    window.location.reload();
-  }, [resetDatabase]);
 
   const handleWeeklyReport = useCallback(async () => {
     const { generateReport } = await import("@/utils/ai/weeklyReport");
@@ -382,14 +374,7 @@ function App() {
                   onUpdateEventReminder={handleUpdateEventReminder}
                   onUpdateHabitReminder={handleUpdateHabitReminder}
                 />
-                <Button
-                  onClick={handleResetDemoData}
-                  variant="ghost"
-                  size="lg"
-                  className="self-start font-semibold"
-                >
-                  Cargar datos demo
-                </Button>
+
               </div>
             </div>
           </div>

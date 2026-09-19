@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useCalendarStore } from '@/store/calendarStore';
 import type { CalendarEvent, CalendarEventCategory } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -16,12 +17,14 @@ function getFD(y: number, m: number) { const d = new Date(y, m, 1).getDay(); ret
 function isT(y: number, m: number, d: number) { const n = new Date(); return n.getFullYear() === y && n.getMonth() === m && n.getDate() === d; }
 function isP(y: number, m: number, d: number) { const dt = new Date(y, m, d); dt.setHours(23, 59, 59, 999); const t = new Date(); t.setHours(0, 0, 0, 0); return dt < t; }
 
-function DayCell({ day, year, month, events, onClick }: { day: number; year: number; month: number; events: CalendarEvent[]; onClick: () => void }) {
+function DayCell({ day, year, month, events, onClick, onHoverStart, onHoverEnd }: { day: number; year: number; month: number; events: CalendarEvent[]; onClick: () => void; onHoverStart: (day: number, rect: DOMRect) => void; onHoverEnd: () => void }) {
   const p = isP(year, month, day), t = isT(year, month, day);
   return (
     <button
       type="button"
       onClick={onClick}
+      onMouseEnter={e => { if (events.length > 0 && !p) onHoverStart(day, e.currentTarget.getBoundingClientRect()); }}
+      onMouseLeave={onHoverEnd}
       className={`relative w-full h-[56px] rounded flex flex-col items-center justify-center cursor-pointer hover:bg-[var(--clay-accent-soft)] ${p ? 'opacity-40' : ''} ${t ? 'ring-1 ring-[var(--clay-accent)]' : ''}`}
       style={{ background: t ? 'var(--clay-accent-soft)' : 'var(--clay-surface)' }}
     >
@@ -110,6 +113,8 @@ function DayDialog({ dateKey }: { dateKey: string }) {
 export function CalendarView() {
   const n = new Date(), [y, setY] = useState(n.getFullYear()), [m, setM] = useState(n.getMonth()), [ad, setAd] = useState<string | null>(null);
   const { events, fetchEvents } = useCalendarStore();
+  const [hoverDay, setHoverDay] = useState<number | null>(null);
+  const [hoverRect, setHoverRect] = useState<DOMRect | null>(null);
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
   const dm = getDM(y, m), fd = getFD(y, m);
   const me = useMemo(() => events.filter(e => { const d = new Date(e.dateKey); return d.getFullYear() === y && d.getMonth() === m; }), [events, y, m]);
@@ -118,8 +123,10 @@ export function CalendarView() {
   const next = () => setM(c => c === 11 ? (setY(p => p + 1), 0) : c + 1);
   const today = () => { const x = new Date(); setY(x.getFullYear()); setM(x.getMonth()); };
 
+  const hoverEvents = hoverDay ? (ebd[hoverDay] || []) : [];
+
   return (
-    <div className="flex flex-col w-full pt-1">
+    <div className="relative flex flex-col w-full pt-1">
       <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-1.5">
           <Calendar className="w-4 h-4 text-accent" />
@@ -144,9 +151,36 @@ export function CalendarView() {
       <div className="grid grid-cols-7 gap-px">
         {[...Array(fd)].map((_, i) => <div key={i} />)}
         {[...Array(dm)].map((_, i) => (
-          <DayCell key={i} day={i + 1} year={y} month={m} events={ebd[i + 1] || []} onClick={() => setAd(`${y}-${String(m + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`)} />
+          <DayCell key={i} day={i + 1} year={y} month={m} events={ebd[i + 1] || []} onClick={() => setAd(`${y}-${String(m + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`)} onHoverStart={(day, rect) => { setHoverDay(day); setHoverRect(rect); }} onHoverEnd={() => { setHoverDay(null); setHoverRect(null); }} />
         ))}
       </div>
+      {/* Hover preview tooltip — portal to body to avoid clipping */}
+      {hoverDay && hoverEvents.length > 0 && hoverRect && createPortal(
+        <div
+          className="fixed z-[9999] pointer-events-none"
+          style={{
+            left: `${hoverRect.left + hoverRect.width / 2}px`,
+            top: `${hoverRect.top - 8}px`,
+            transform: 'translate(-50%, -100%)',
+          }}
+        >
+          <div className="rounded-lg px-3 py-2 max-w-[200px] shadow-lg border border-border/40" style={{ background: 'var(--clay-surface)', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}>
+            <p className="text-[10px] font-bold text-text-primary mb-1">{hoverDay} de {MONTH_NAMES[m]}</p>
+            <div className="space-y-1">
+              {hoverEvents.map(ev => (
+                <div key={ev.id} className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: C[ev.category].c }} />
+                  <span className="text-[10px] text-text-secondary truncate">{ev.title}</span>
+                </div>
+              ))}
+            </div>
+            {hoverEvents.length > 3 && (
+              <p className="text-[9px] text-text-muted mt-1">+{hoverEvents.length - 3} más</p>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
       <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 pt-2 border-t border-border/30">
         {CATS.map(c => (
           <div key={c} className="flex items-center gap-1.5">
