@@ -25,7 +25,7 @@ function DayCell({ day, year, month, events, onClick, onHoverStart, onHoverEnd }
       onClick={onClick}
       onMouseEnter={e => { if (events.length > 0 && !p) onHoverStart(day, e.currentTarget.getBoundingClientRect()); }}
       onMouseLeave={onHoverEnd}
-      className={`relative w-full h-[72px] rounded flex flex-col items-center justify-center cursor-pointer hover:bg-[var(--clay-accent-soft)] ${p ? 'opacity-40' : ''} ${t ? 'ring-1 ring-[var(--clay-accent)]' : ''}`}
+      className={`relative w-full h-[82px] rounded flex flex-col items-center justify-center cursor-pointer hover:bg-[var(--clay-accent-soft)] ${p ? 'opacity-40' : ''} ${t ? 'ring-1 ring-[var(--clay-accent)]' : ''}`}
       style={{ background: t ? 'var(--clay-accent-soft)' : 'var(--clay-surface)' }}
     >
       <span className={`text-sm font-semibold leading-none ${p ? 'text-text-muted' : t ? 'text-accent' : 'text-text-primary'}`}>{day}</span>
